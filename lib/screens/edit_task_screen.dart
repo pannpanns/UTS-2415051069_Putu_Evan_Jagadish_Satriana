@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class EditTaskScreen extends StatefulWidget {
@@ -29,11 +28,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   String? _selectedPriority;
   DateTime? _selectedDate;
 
-  final List<String> _priorities = [
-    'Tinggi',
-    'Sedang',
-    'Rendah',
-  ];
+  final List<String> _priorities = ['Tinggi', 'Sedang', 'Rendah'];
 
   static const List<String> _months = [
     'Januari',
@@ -54,17 +49,11 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   void initState() {
     super.initState();
 
-    _titleController = TextEditingController(
-      text: widget.title,
-    );
+    _titleController = TextEditingController(text: widget.title);
 
-    _subjectController = TextEditingController(
-      text: widget.subject,
-    );
+    _subjectController = TextEditingController(text: widget.subject);
 
-    _deadlineController = TextEditingController(
-      text: widget.deadline,
-    );
+    _deadlineController = TextEditingController(text: widget.deadline);
 
     _selectedPriority = _priorities.contains(widget.priority)
         ? widget.priority
@@ -87,9 +76,9 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     if (parts.length == 3) {
       final day = int.tryParse(parts[0]);
 
-      final month = _months.indexWhere(
-            (item) =>
-                item.toLowerCase() == parts[1].toLowerCase(),
+      final month =
+          _months.indexWhere(
+            (item) => item.toLowerCase() == parts[1].toLowerCase(),
           ) +
           1;
 
@@ -136,35 +125,23 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     }
   }
 
-  InputDecoration _inputDecoration({
-    required IconData icon,
-  }) {
+  InputDecoration _inputDecoration({required IconData icon}) {
     return InputDecoration(
       prefixIcon: Icon(icon, size: 20),
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 17,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 17),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFFE2EBE4),
-        ),
+        borderSide: const BorderSide(color: Color(0xFFE2EBE4)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFFE2EBE4),
-        ),
+        borderSide: const BorderSide(color: Color(0xFFE2EBE4)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFF2E8B57),
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: Color(0xFF2E8B57), width: 1.5),
       ),
     );
   }
@@ -215,14 +192,13 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
           controller: _deadlineController,
           readOnly: true,
           onTap: _selectDate,
-          decoration: _inputDecoration(
-            icon: Icons.calendar_month_outlined,
-          ).copyWith(
-            suffixIcon: const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: Color(0xFF718075),
-            ),
-          ),
+          decoration: _inputDecoration(icon: Icons.calendar_month_outlined)
+              .copyWith(
+                suffixIcon: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Color(0xFF718075),
+                ),
+              ),
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Deadline wajib dipilih';
@@ -242,9 +218,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         DropdownButtonFormField<String>(
           initialValue: _selectedPriority,
           isExpanded: true,
-          decoration: _inputDecoration(
-            icon: Icons.flag_outlined,
-          ),
+          decoration: _inputDecoration(icon: Icons.flag_outlined),
           items: _priorities.map((priority) {
             return DropdownMenuItem<String>(
               value: priority,
@@ -300,9 +274,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
             padding: const EdgeInsets.all(20),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 600,
-                ),
+                constraints: const BoxConstraints(maxWidth: 600),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -337,23 +309,17 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                         child: FilledButton.icon(
                           onPressed: _saveChanges,
                           style: FilledButton.styleFrom(
-                            backgroundColor:
-                                const Color(0xFF2E8B57),
+                            backgroundColor: const Color(0xFF2E8B57),
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(30),
+                              borderRadius: BorderRadius.circular(30),
                             ),
                           ),
                           icon: const Icon(Icons.save_outlined),
                           label: const Text(
                             'Simpan Perubahan',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
                       ),

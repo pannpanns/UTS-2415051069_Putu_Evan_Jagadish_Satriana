@@ -1,14 +1,22 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+
 import 'screens/main_navigation_screen.dart';
+
+import 'providers/course_provider.dart';
+import 'providers/task_provider.dart';
+
+import 'repositories/course_repository.dart';
+import 'repositories/task_repository.dart';
+
+import 'services/in_memory_course_data_source.dart';
+import 'services/in_memory_task_data_source.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.edgeToEdge,
-  );
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -21,7 +29,23 @@ Future<void> main() async {
     ),
   );
 
-  runApp(const TuntasKuliahApp());
+  final courseRepository = CourseRepository(InMemoryCourseDataSource());
+
+  final taskRepository = TaskRepository(InMemoryTaskDataSource());
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => CourseProvider(courseRepository)..loadCourses(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => TaskProvider(taskRepository)..loadTasks(),
+        ),
+      ],
+      child: const TuntasKuliahApp(),
+    ),
+  );
 }
 
 class TuntasKuliahApp extends StatelessWidget {

@@ -1,0 +1,62 @@
+import 'package:flutter/foundation.dart';
+
+import '../models/task.dart';
+import '../repositories/task_repository.dart';
+
+class TaskProvider extends ChangeNotifier {
+  TaskProvider(this._repository);
+
+  final TaskRepository _repository;
+
+  List<Task> _tasks = [];
+  bool _isLoading = false;
+  String? _error;
+
+  List<Task> get tasks => List.unmodifiable(_tasks);
+
+  bool get isLoading => _isLoading;
+
+  String? get error => _error;
+
+  int get totalTasks => _tasks.length;
+
+  int get completedTasks =>
+      _tasks.where((task) => task.status == Task.statusCompleted).length;
+
+  int get inProgressTasks =>
+      _tasks.where((task) => task.status == Task.statusInProgress).length;
+
+  int get notStartedTasks =>
+      _tasks.where((task) => task.status == Task.statusNotStarted).length;
+
+  double get completionRate {
+    if (_tasks.isEmpty) return 0;
+
+    return completedTasks / totalTasks;
+  }
+
+  List<Task> get upcomingTasks {
+    final result = List<Task>.from(_tasks);
+
+    result.sort((a, b) => a.deadline.compareTo(b.deadline));
+
+    return List.unmodifiable(result);
+  }
+
+  Future<void> loadTasks() async {
+    if (_isLoading) return;
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _tasks = await _repository.getTasks();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+}

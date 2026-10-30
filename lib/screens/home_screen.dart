@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../widgets/summary_card.dart';
@@ -17,26 +16,21 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isLandscape =
-            constraints.maxWidth > constraints.maxHeight;
+        final isLandscape = constraints.maxWidth > constraints.maxHeight;
 
-        final horizontalPadding =
-            constraints.maxWidth >= 700 ? 32.0 : 20.0;
+        final horizontalPadding = constraints.maxWidth >= 700 ? 32.0 : 20.0;
 
         final contentWidth =
             (constraints.maxWidth > maxContentWidth
-                    ? maxContentWidth
-                    : constraints.maxWidth) -
-                horizontalPadding * 2;
+                ? maxContentWidth
+                : constraints.maxWidth) -
+            horizontalPadding * 2;
 
         final isWide = contentWidth >= 680;
 
         return Column(
           children: [
-            _buildHeader(
-              isLandscape,
-              horizontalPadding,
-            ),
+            _buildHeader(isLandscape, horizontalPadding),
 
             Expanded(
               child: SingleChildScrollView(
@@ -59,24 +53,15 @@ class HomeScreen extends StatelessWidget {
                         children: [
                           _buildGreeting(isLandscape),
 
-                          SizedBox(
-                            height: isLandscape ? 14 : 22,
-                          ),
+                          SizedBox(height: isLandscape ? 14 : 22),
 
-                          _buildSummary(
-                            contentWidth,
-                            isLandscape,
-                          ),
+                          _buildSummary(contentWidth, isLandscape),
 
-                          SizedBox(
-                            height: isLandscape ? 14 : 20,
-                          ),
+                          SizedBox(height: isLandscape ? 14 : 20),
 
                           _buildProgressCard(),
 
-                          SizedBox(
-                            height: isLandscape ? 18 : 28,
-                          ),
+                          SizedBox(height: isLandscape ? 18 : 28),
 
                           _buildUpcomingHeader(),
 
@@ -96,18 +81,12 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(
-    bool isLandscape,
-    double horizontalPadding,
-  ) {
+  Widget _buildHeader(bool isLandscape, double horizontalPadding) {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Color(0xFF14532D),
-            Color(0xFF2E8B57),
-          ],
+          colors: [Color(0xFF14532D), Color(0xFF2E8B57)],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
@@ -118,9 +97,7 @@ class HomeScreen extends StatelessWidget {
       ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: maxContentWidth,
-          ),
+          constraints: const BoxConstraints(maxWidth: maxContentWidth),
           child: Padding(
             padding: EdgeInsets.symmetric(
               horizontal: horizontalPadding,
@@ -222,10 +199,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummary(
-    double contentWidth,
-    bool isLandscape,
-  ) {
+  Widget _buildSummary(double contentWidth, bool isLandscape) {
     final crossAxisCount = contentWidth >= 680 ? 4 : 2;
 
     return Column(
@@ -246,8 +220,7 @@ class HomeScreen extends StatelessWidget {
           padding: EdgeInsets.zero,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate:
-              SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
@@ -295,9 +268,7 @@ class HomeScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFFE2EBE4),
-        ),
+        border: Border.all(color: const Color(0xFFE2EBE4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,9 +303,7 @@ class HomeScreen extends StatelessWidget {
               value: 5 / 12,
               minHeight: 8,
               backgroundColor: Color(0xFFE2ECE4),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                primaryGreen,
-              ),
+              valueColor: AlwaysStoppedAnimation<Color>(primaryGreen),
             ),
           ),
 
@@ -342,10 +311,7 @@ class HomeScreen extends StatelessWidget {
 
           Text(
             '5 dari 12 tugas telah diselesaikan.',
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -366,10 +332,7 @@ class HomeScreen extends StatelessWidget {
         ),
 
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 6,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: const Color(0xFFE3F2E7),
             borderRadius: BorderRadius.circular(8),

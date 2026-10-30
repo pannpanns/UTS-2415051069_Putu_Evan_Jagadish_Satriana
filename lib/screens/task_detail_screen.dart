@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../widgets/priority_badge.dart';
@@ -20,21 +19,13 @@ class TaskDetailScreen extends StatelessWidget {
     required this.status,
   });
 
-  Widget _buildInformation(
-    String label,
-    String value,
-    IconData icon,
-  ) {
+  Widget _buildInformation(String label, String value, IconData icon) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            color: const Color(0xFF2E8B57),
-            size: 21,
-          ),
+          Icon(icon, color: const Color(0xFF2E8B57), size: 21),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -42,10 +33,7 @@ class TaskDetailScreen extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 5),
                 Text(
@@ -83,9 +71,7 @@ class TaskDetailScreen extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 700,
-                ),
+                constraints: const BoxConstraints(maxWidth: 700),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -95,9 +81,7 @@ class TaskDetailScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: const Color(0xFFE2EBE4),
-                        ),
+                        border: Border.all(color: const Color(0xFFE2EBE4)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,12 +147,9 @@ class TaskDetailScreen extends StatelessWidget {
                           );
                         },
                         style: FilledButton.styleFrom(
-                          backgroundColor:
-                              const Color(0xFF2E8B57),
+                          backgroundColor: const Color(0xFF2E8B57),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 15,
-                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
                         ),
                         icon: const Icon(Icons.edit_outlined),
                         label: const Text('Edit Tugas'),

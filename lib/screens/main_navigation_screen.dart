@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import 'home_screen.dart';
@@ -9,12 +8,10 @@ class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  State<MainNavigationScreen> createState() =>
-      _MainNavigationScreenState();
+  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState
-    extends State<MainNavigationScreen> {
+class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
   static const List<Widget> _screens = [
@@ -36,10 +33,7 @@ class _MainNavigationScreenState
         bottom: false,
         left: true,
         right: true,
-        child: IndexedStack(
-          index: _selectedIndex,
-          children: _screens,
-        ),
+        child: IndexedStack(index: _selectedIndex, children: _screens),
       ),
 
       bottomNavigationBar: ColoredBox(
@@ -54,8 +48,7 @@ class _MainNavigationScreenState
             elevation: 0,
             indicatorColor: const Color(0xFFE5F3E8),
             selectedIndex: _selectedIndex,
-            labelBehavior:
-                NavigationDestinationLabelBehavior.alwaysShow,
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
             onDestinationSelected: (index) {
               setState(() {
                 _selectedIndex = index;

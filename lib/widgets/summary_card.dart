@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class SummaryCard extends StatelessWidget {
@@ -21,16 +20,11 @@ class SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 10,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: color.withValues(alpha: 0.10),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.10)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -44,11 +38,7 @@ class SummaryCard extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 18,
-            ),
+            child: Icon(icon, color: color, size: 18),
           ),
           const SizedBox(height: 7),
           Text(
