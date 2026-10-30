@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/course.dart';
 import '../providers/course_provider.dart';
+import '../widgets/error_view.dart';
 
 class CourseScreen extends StatelessWidget {
   const CourseScreen({super.key});
@@ -20,13 +22,32 @@ class CourseScreen extends StatelessWidget {
     Color(0xFF8270AA),
   ];
 
-  Widget _buildCourseCard(
-    String name,
-    String code,
-    String lecturer,
-    IconData icon,
-    Color color,
-  ) {
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'active':
+        return 'Aktif';
+      case 'done':
+        return 'Selesai';
+      default:
+        return 'Direncanakan';
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'active':
+        return const Color(0xFF2E8B57);
+      case 'done':
+        return const Color(0xFF3976A8);
+      default:
+        return const Color(0xFFC17A1B);
+    }
+  }
+
+  Widget _buildCourseCard(Course course, int index) {
+    final color = _colors[index % _colors.length];
+    final statusColor = _statusColor(course.status);
+
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -43,7 +64,7 @@ class CourseScreen extends StatelessWidget {
               color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 23),
+            child: Icon(_icons[index % _icons.length], color: color, size: 23),
           ),
           const SizedBox(width: 13),
           Expanded(
@@ -52,7 +73,7 @@ class CourseScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  name,
+                  course.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -61,15 +82,29 @@ class CourseScreen extends StatelessWidget {
                     color: Color(0xFF25372B),
                   ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 6),
                 Text(
-                  code,
+                  '${course.code} • ${course.credits} SKS',
                   style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  lecturer,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                const SizedBox(height: 7),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: Text(
+                    _statusLabel(course.status),
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -86,8 +121,6 @@ class CourseScreen extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isLandscape = constraints.maxWidth > constraints.maxHeight;
-
         final horizontalPadding = constraints.maxWidth >= 700 ? 32.0 : 20.0;
 
         final contentWidth = constraints.maxWidth - horizontalPadding * 2;
@@ -100,7 +133,7 @@ class CourseScreen extends StatelessWidget {
             Padding(
               padding: EdgeInsets.fromLTRB(
                 horizontalPadding,
-                isLandscape ? 10 : 20,
+                20,
                 horizontalPadding,
                 16,
               ),
@@ -123,7 +156,6 @@ class CourseScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             Expanded(
               child: Builder(
                 builder: (context) {
@@ -132,22 +164,16 @@ class CourseScreen extends StatelessWidget {
                   }
 
                   if (provider.error != null) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text('Gagal memuat mata kuliah.'),
-                          TextButton(
-                            onPressed: provider.loadCourses,
-                            child: const Text('Coba Lagi'),
-                          ),
-                        ],
-                      ),
+                    return ErrorView(
+                      message: provider.error!,
+                      onRetry: provider.loadCourses,
                     );
                   }
 
                   if (provider.courses.isEmpty) {
-                    return const Center(child: Text('Belum ada mata kuliah.'));
+                    return const Center(
+                      child: Text('Data mata kuliah belum tersedia.'),
+                    );
                   }
 
                   return GridView.count(
@@ -161,17 +187,11 @@ class CourseScreen extends StatelessWidget {
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                     childAspectRatio: crossAxisCount == 2 ? 3.2 : 3.5,
-                    children: List.generate(provider.courses.length, (index) {
-                      final course = provider.courses[index];
-
-                      return _buildCourseCard(
-                        course.name,
-                        course.code ?? 'Tanpa kode',
-                        course.lecturer ?? 'Dosen belum diatur',
-                        _icons[index % _icons.length],
-                        _colors[index % _colors.length],
-                      );
-                    }),
+                    children: List.generate(
+                      provider.courses.length,
+                      (index) =>
+                          _buildCourseCard(provider.courses[index], index),
+                    ),
                   );
                 },
               ),

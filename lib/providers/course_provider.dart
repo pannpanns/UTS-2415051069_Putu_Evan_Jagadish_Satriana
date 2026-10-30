@@ -28,7 +28,7 @@ class CourseProvider extends ChangeNotifier {
     try {
       _courses = await _repository.getCourses();
     } catch (e) {
-      _error = e.toString();
+      _error = e.toString().replaceFirst('Exception: ', '');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -37,8 +37,8 @@ class CourseProvider extends ChangeNotifier {
 
   String courseNameById(String courseId) {
     for (final course in _courses) {
-      if (course.id == courseId) {
-        return course.name;
+      if (course.id?.toString() == courseId) {
+        return course.title;
       }
     }
 

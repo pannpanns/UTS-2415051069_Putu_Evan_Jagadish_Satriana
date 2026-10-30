@@ -8,7 +8,7 @@ class InMemoryTaskDataSource implements TaskDataSource {
       Task(
         id: 'task-001',
         title: 'Membuat Makalah',
-        courseId: 'course-001',
+        courseId: '1',
         deadline: DateTime(2026, 11, 2),
         priority: Task.priorityHigh,
         status: Task.statusInProgress,
@@ -16,7 +16,7 @@ class InMemoryTaskDataSource implements TaskDataSource {
       Task(
         id: 'task-002',
         title: 'Laporan Praktikum',
-        courseId: 'course-002',
+        courseId: '2',
         deadline: DateTime(2026, 11, 4),
         priority: Task.priorityMedium,
         status: Task.statusNotStarted,
@@ -24,7 +24,7 @@ class InMemoryTaskDataSource implements TaskDataSource {
       Task(
         id: 'task-003',
         title: 'Presentasi Individu',
-        courseId: 'course-003',
+        courseId: '3',
         deadline: DateTime(2026, 11, 6),
         priority: Task.priorityLow,
         status: Task.statusNotStarted,

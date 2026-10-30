@@ -6,28 +6,32 @@ class InMemoryCourseDataSource implements CourseDataSource {
   Future<List<Course>> getCourses() async {
     return const [
       Course(
-        id: 'course-001',
-        name: 'Pemrograman Mobile',
+        id: 1,
         code: 'IF204',
-        lecturer: 'Dosen Pengampu',
+        title: 'Pemrograman Mobile',
+        credits: 3,
+        status: 'active',
       ),
       Course(
-        id: 'course-002',
-        name: 'Basis Data',
+        id: 2,
         code: 'IF202',
-        lecturer: 'Dosen Pengampu',
+        title: 'Basis Data',
+        credits: 3,
+        status: 'active',
       ),
       Course(
-        id: 'course-003',
-        name: 'Analisis Sistem',
+        id: 3,
         code: 'IF206',
-        lecturer: 'Dosen Pengampu',
+        title: 'Analisis Sistem',
+        credits: 3,
+        status: 'planned',
       ),
       Course(
-        id: 'course-004',
-        name: 'Rekayasa Perangkat Lunak',
+        id: 4,
         code: 'IF208',
-        lecturer: 'Dosen Pengampu',
+        title: 'Rekayasa Perangkat Lunak',
+        credits: 3,
+        status: 'done',
       ),
     ];
   }

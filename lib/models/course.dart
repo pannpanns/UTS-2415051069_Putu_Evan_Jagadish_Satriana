@@ -1,30 +1,50 @@
 class Course {
-  const Course({this.id, required this.name, this.code, this.lecturer});
+  const Course({
+    this.id,
+    required this.code,
+    required this.title,
+    required this.credits,
+    this.status = 'planned',
+  });
 
-  final String? id;
-  final String name;
-  final String? code;
-  final String? lecturer;
+  final int? id;
+  final String code;
+  final String title;
+  final int credits;
+  final String status;
 
   factory Course.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final rawCredits = json['credits'];
+
     return Course(
-      id: json['id']?.toString(),
-      name: (json['name'] ?? '').toString(),
-      code: json['code']?.toString(),
-      lecturer: json['lecturer']?.toString(),
+      id: rawId is int ? rawId : int.tryParse(rawId?.toString() ?? ''),
+      code: (json['code'] ?? '').toString(),
+      title: (json['title'] ?? '').toString(),
+      credits: rawCredits is num
+          ? rawCredits.toInt()
+          : int.tryParse(rawCredits?.toString() ?? '') ?? 0,
+      status: json['status']?.toString() ?? 'planned',
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {'name': name, 'code': code, 'lecturer': lecturer};
+    return {'code': code, 'title': title, 'credits': credits, 'status': status};
   }
 
-  Course copyWith({String? id, String? name, String? code, String? lecturer}) {
+  Course copyWith({
+    int? id,
+    String? code,
+    String? title,
+    int? credits,
+    String? status,
+  }) {
     return Course(
       id: id ?? this.id,
-      name: name ?? this.name,
       code: code ?? this.code,
-      lecturer: lecturer ?? this.lecturer,
+      title: title ?? this.title,
+      credits: credits ?? this.credits,
+      status: status ?? this.status,
     );
   }
 }

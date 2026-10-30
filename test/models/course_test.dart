@@ -3,32 +3,49 @@ import 'package:tuntas_kuliah/models/course.dart';
 
 void main() {
   group('Course Model', () {
-    test('parses JSON correctly', () {
+    test('parses API JSON correctly', () {
       final course = Course.fromJson({
-        'id': 'course-001',
-        'name': 'Pemrograman Mobile',
-        'code': 'IF204',
-        'lecturer': 'Dosen Pengampu',
+        'id': 1,
+        'code': 'MOB01',
+        'title': 'Git & GitHub',
+        'credits': 2,
+        'status': 'active',
       });
 
-      expect(course.id, 'course-001');
-      expect(course.name, 'Pemrograman Mobile');
-      expect(course.code, 'IF204');
-      expect(course.lecturer, 'Dosen Pengampu');
+      expect(course.id, 1);
+      expect(course.code, 'MOB01');
+      expect(course.title, 'Git & GitHub');
+      expect(course.credits, 2);
+      expect(course.status, 'active');
     });
 
-    test('converts model to JSON', () {
+    test('converts Course model to JSON', () {
       const course = Course(
-        name: 'Basis Data',
-        code: 'IF202',
-        lecturer: 'Dosen Pengampu',
+        id: 1,
+        code: 'MOB01',
+        title: 'Git & GitHub',
+        credits: 2,
+        status: 'active',
       );
 
       final json = course.toJson();
 
-      expect(json['name'], 'Basis Data');
-      expect(json['code'], 'IF202');
-      expect(json['lecturer'], 'Dosen Pengampu');
+      expect(json['code'], 'MOB01');
+      expect(json['title'], 'Git & GitHub');
+      expect(json['credits'], 2);
+      expect(json['status'], 'active');
+      expect(json.containsKey('id'), false);
+    });
+
+    test('uses planned as default status', () {
+      final course = Course.fromJson({
+        'id': 2,
+        'code': 'DB01',
+        'title': 'Database',
+        'credits': 3,
+      });
+
+      expect(course.status, 'planned');
     });
   });
 }

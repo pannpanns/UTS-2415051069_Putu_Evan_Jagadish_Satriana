@@ -10,7 +10,7 @@ import 'providers/task_provider.dart';
 import 'repositories/course_repository.dart';
 import 'repositories/task_repository.dart';
 
-import 'services/in_memory_course_data_source.dart';
+import 'services/course_api_service.dart';
 import 'services/in_memory_task_data_source.dart';
 
 Future<void> main() async {
@@ -29,8 +29,7 @@ Future<void> main() async {
     ),
   );
 
-  final courseRepository = CourseRepository(InMemoryCourseDataSource());
-
+  final courseRepository = CourseRepository(CourseApiService());
   final taskRepository = TaskRepository(InMemoryTaskDataSource());
 
   runApp(

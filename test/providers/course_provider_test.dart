@@ -25,7 +25,7 @@ void main() {
 
       await provider.loadCourses();
 
-      expect(provider.courseNameById('course-001'), 'Pemrograman Mobile');
+      expect(provider.courseNameById('1'), 'Pemrograman Mobile');
     });
   });
 }
