@@ -6,45 +6,81 @@ import '../widgets/task_card.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  static const double _maxContentWidth = 1200;
+  static const double _wideBreakpoint = 700;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildHeader(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildGreeting(),
-                    const SizedBox(height: 22),
-                    _buildSummary(),
-                    const SizedBox(height: 16),
-                    _buildProgressCard(context),
-                    const SizedBox(height: 27),
-                    _buildUpcomingHeader(),
-                    const SizedBox(height: 14),
-                    _buildUpcomingTasks(),
-                  ],
-                ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= _wideBreakpoint;
+
+            final horizontalPadding = isWide ? 32.0 : 20.0;
+
+            final availableWidth = constraints.maxWidth > _maxContentWidth
+                ? _maxContentWidth
+                : constraints.maxWidth;
+
+            final contentWidth = availableWidth - (horizontalPadding * 2);
+
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildHeader(horizontalPadding),
+
+                  Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: _maxContentWidth,
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          24,
+                          horizontalPadding,
+                          24,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildGreeting(),
+                            const SizedBox(height: 22),
+
+                            _buildSummary(contentWidth),
+                            const SizedBox(height: 16),
+
+                            _buildProgressCard(),
+                            const SizedBox(height: 27),
+
+                            _buildUpcomingHeader(),
+                            const SizedBox(height: 14),
+
+                            _buildUpcomingTasks(isWide),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
   // Full-width application header
-  Widget _buildHeader() {
+  Widget _buildHeader(double horizontalPadding) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: 20,
+      ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF14532D), Color(0xFF2E8B57)],
@@ -56,56 +92,63 @@ class HomeScreen extends StatelessWidget {
           bottomRight: Radius.circular(22),
         ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 43,
-            height: 43,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: const Icon(
-              Icons.school_rounded,
-              color: Color(0xFF247A45),
-              size: 25,
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'TuntasKuliah',
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+          child: Row(
+            children: [
+              Container(
+                width: 43,
+                height: 43,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(13),
                 ),
-                SizedBox(height: 3),
-                Text(
-                  'Academic Assignment Tracker',
-                  style: TextStyle(fontSize: 11, color: Color(0xFFDCEFE2)),
+                child: const Icon(
+                  Icons.school_rounded,
+                  color: Color(0xFF247A45),
+                  size: 25,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'TuntasKuliah',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Academic Assignment Tracker',
+                      style: TextStyle(fontSize: 11, color: Color(0xFFDCEFE2)),
+                    ),
+                  ],
+                ),
+              ),
+
+              Container(
+                width: 38,
+                height: 38,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.person_outline,
+                  color: Color(0xFF247A45),
+                  size: 21,
+                ),
+              ),
+            ],
           ),
-          Container(
-            width: 38,
-            height: 38,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.person_outline,
-              color: Color(0xFF247A45),
-              size: 21,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -132,8 +175,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Task summary
-  Widget _buildSummary() {
+  // Responsive task summary
+  Widget _buildSummary(double contentWidth) {
+    final crossAxisCount = contentWidth >= 680 ? 4 : 2;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -146,13 +191,16 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 13),
-        GridView.count(
+
+        GridView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.22,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            mainAxisExtent: 128,
+          ),
           children: const [
             SummaryCard(
               title: 'Total Tugas',
@@ -189,7 +237,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   // Task completion progress
-  Widget _buildProgressCard(BuildContext context) {
+  Widget _buildProgressCard() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(17),
@@ -212,17 +260,18 @@ class HomeScreen extends StatelessWidget {
                   color: Color(0xFF25372B),
                 ),
               ),
-              Text(
+              const Text(
                 '42%',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Color(0xFF2E8B57),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
+
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: const LinearProgressIndicator(
@@ -232,7 +281,9 @@ class HomeScreen extends StatelessWidget {
               valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E8B57)),
             ),
           ),
+
           const SizedBox(height: 9),
+
           Text(
             '5 dari 12 tugas telah diselesaikan.',
             style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
@@ -274,34 +325,53 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Upcoming task list
-  Widget _buildUpcomingTasks() {
-    return const Column(
-      children: [
-        TaskCard(
-          title: 'Membuat Makalah',
-          subject: 'Pemrograman Mobile',
-          deadline: '02 November 2026',
-          priority: 'Tinggi',
-          status: 'Dikerjakan',
-        ),
-        SizedBox(height: 11),
-        TaskCard(
-          title: 'Laporan Praktikum',
-          subject: 'Basis Data',
-          deadline: '04 November 2026',
-          priority: 'Sedang',
-          status: 'Belum Mulai',
-        ),
-        SizedBox(height: 11),
-        TaskCard(
-          title: 'Presentasi Individu',
-          subject: 'Analisis Sistem',
-          deadline: '06 November 2026',
-          priority: 'Rendah',
-          status: 'Belum Mulai',
-        ),
-      ],
+  // Responsive upcoming task list
+  Widget _buildUpcomingTasks(bool isWide) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+
+        final itemWidth = isWide
+            ? (constraints.maxWidth - spacing) / 2
+            : constraints.maxWidth;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            SizedBox(
+              width: itemWidth,
+              child: const TaskCard(
+                title: 'Membuat Makalah',
+                subject: 'Pemrograman Mobile',
+                deadline: '02 November 2026',
+                priority: 'Tinggi',
+                status: 'Dikerjakan',
+              ),
+            ),
+            SizedBox(
+              width: itemWidth,
+              child: const TaskCard(
+                title: 'Laporan Praktikum',
+                subject: 'Basis Data',
+                deadline: '04 November 2026',
+                priority: 'Sedang',
+                status: 'Belum Mulai',
+              ),
+            ),
+            SizedBox(
+              width: itemWidth,
+              child: const TaskCard(
+                title: 'Presentasi Individu',
+                subject: 'Analisis Sistem',
+                deadline: '06 November 2026',
+                priority: 'Rendah',
+                status: 'Belum Mulai',
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
