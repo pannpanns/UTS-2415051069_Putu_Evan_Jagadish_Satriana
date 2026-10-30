@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../widgets/summary_card.dart';
@@ -6,177 +7,225 @@ import '../widgets/task_card.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static const double _maxContentWidth = 1200;
-  static const double _wideBreakpoint = 700;
+  static const double maxContentWidth = 1200;
+
+  static const Color background = Color(0xFFF3F8F4);
+  static const Color darkGreen = Color(0xFF25372B);
+  static const Color primaryGreen = Color(0xFF2E8B57);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= _wideBreakpoint;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isLandscape =
+            constraints.maxWidth > constraints.maxHeight;
 
-            final horizontalPadding = isWide ? 32.0 : 20.0;
+        final horizontalPadding =
+            constraints.maxWidth >= 700 ? 32.0 : 20.0;
 
-            final availableWidth = constraints.maxWidth > _maxContentWidth
-                ? _maxContentWidth
-                : constraints.maxWidth;
+        final contentWidth =
+            (constraints.maxWidth > maxContentWidth
+                    ? maxContentWidth
+                    : constraints.maxWidth) -
+                horizontalPadding * 2;
 
-            final contentWidth = availableWidth - (horizontalPadding * 2);
+        final isWide = contentWidth >= 680;
 
-            return SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildHeader(horizontalPadding),
+        return Column(
+          children: [
+            _buildHeader(
+              isLandscape,
+              horizontalPadding,
+            ),
 
-                  Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: _maxContentWidth,
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: maxContentWidth,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        isLandscape ? 12 : 22,
+                        horizontalPadding,
+                        12,
                       ),
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          horizontalPadding,
-                          24,
-                          horizontalPadding,
-                          24,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildGreeting(),
-                            const SizedBox(height: 22),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildGreeting(isLandscape),
 
-                            _buildSummary(contentWidth),
-                            const SizedBox(height: 16),
+                          SizedBox(
+                            height: isLandscape ? 14 : 22,
+                          ),
 
-                            _buildProgressCard(),
-                            const SizedBox(height: 27),
+                          _buildSummary(
+                            contentWidth,
+                            isLandscape,
+                          ),
 
-                            _buildUpcomingHeader(),
-                            const SizedBox(height: 14),
+                          SizedBox(
+                            height: isLandscape ? 14 : 20,
+                          ),
 
-                            _buildUpcomingTasks(isWide),
-                          ],
-                        ),
+                          _buildProgressCard(),
+
+                          SizedBox(
+                            height: isLandscape ? 18 : 28,
+                          ),
+
+                          _buildUpcomingHeader(),
+
+                          const SizedBox(height: 14),
+
+                          _buildUpcomingTasks(isWide),
+                        ],
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
-            );
-          },
-        ),
-      ),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  // Full-width application header
-  Widget _buildHeader(double horizontalPadding) {
+  Widget _buildHeader(
+    bool isLandscape,
+    double horizontalPadding,
+  ) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: horizontalPadding,
-        vertical: 20,
-      ),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF14532D), Color(0xFF2E8B57)],
+          colors: [
+            Color(0xFF14532D),
+            Color(0xFF2E8B57),
+          ],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(22),
-          bottomRight: Radius.circular(22),
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
         ),
       ),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: _maxContentWidth),
-          child: Row(
-            children: [
-              Container(
-                width: 43,
-                height: 43,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: const Icon(
-                  Icons.school_rounded,
-                  color: Color(0xFF247A45),
-                  size: 25,
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'TuntasKuliah',
-                      style: TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+          constraints: const BoxConstraints(
+            maxWidth: maxContentWidth,
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: isLandscape ? 7 : 10,
+            ),
+            child: SizedBox(
+              height: 48,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(13),
                     ),
-                    SizedBox(height: 3),
-                    Text(
-                      'Academic Assignment Tracker',
-                      style: TextStyle(fontSize: 11, color: Color(0xFFDCEFE2)),
+                    child: const Icon(
+                      Icons.school_rounded,
+                      color: primaryGreen,
+                      size: 25,
                     ),
-                  ],
-                ),
-              ),
+                  ),
 
-              Container(
-                width: 38,
-                height: 38,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.person_outline,
-                  color: Color(0xFF247A45),
-                  size: 21,
-                ),
+                  const SizedBox(width: 12),
+
+                  const Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'TuntasKuliah',
+                          style: TextStyle(
+                            fontSize: 18,
+                            height: 1.2,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: 3),
+                        Text(
+                          'Academic Assignment Tracker',
+                          style: TextStyle(
+                            fontSize: 10,
+                            height: 1.2,
+                            color: Color(0xFFDCEFE2),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.person_outline,
+                      color: Color(0xFF247A45),
+                      size: 21,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  // Greeting section
-  Widget _buildGreeting() {
+  Widget _buildGreeting(bool isLandscape) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Halo, Mahasiswa!',
           style: TextStyle(
-            fontSize: 22,
+            fontSize: isLandscape ? 19 : 22,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF25372B),
+            color: darkGreen,
           ),
         ),
         const SizedBox(height: 5),
         Text(
           'Pantau dan selesaikan tugas kuliahmu.',
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          style: TextStyle(
+            fontSize: isLandscape ? 12 : 13,
+            color: Colors.grey.shade600,
+          ),
         ),
       ],
     );
   }
 
-  // Responsive task summary
-  Widget _buildSummary(double contentWidth) {
+  Widget _buildSummary(
+    double contentWidth,
+    bool isLandscape,
+  ) {
     final crossAxisCount = contentWidth >= 680 ? 4 : 2;
 
     return Column(
@@ -187,19 +236,22 @@ class HomeScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF25372B),
+            color: darkGreen,
           ),
         ),
-        const SizedBox(height: 13),
+
+        const SizedBox(height: 10),
 
         GridView(
+          padding: EdgeInsets.zero,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate:
+              SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            mainAxisExtent: 128,
+            mainAxisExtent: isLandscape ? 116 : 128,
           ),
           children: const [
             SummaryCard(
@@ -236,7 +288,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Task completion progress
   Widget _buildProgressCard() {
     return Container(
       width: double.infinity,
@@ -244,7 +295,9 @@ class HomeScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2EBE4)),
+        border: Border.all(
+          color: const Color(0xFFE2EBE4),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,7 +310,7 @@ class HomeScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF25372B),
+                  color: darkGreen,
                 ),
               ),
               const Text(
@@ -265,11 +318,12 @@ class HomeScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2E8B57),
+                  color: primaryGreen,
                 ),
               ),
             ],
           ),
+
           const SizedBox(height: 12),
 
           ClipRRect(
@@ -278,7 +332,9 @@ class HomeScreen extends StatelessWidget {
               value: 5 / 12,
               minHeight: 8,
               backgroundColor: Color(0xFFE2ECE4),
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E8B57)),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                primaryGreen,
+              ),
             ),
           ),
 
@@ -286,14 +342,16 @@ class HomeScreen extends StatelessWidget {
 
           Text(
             '5 dari 12 tugas telah diselesaikan.',
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+            ),
           ),
         ],
       ),
     );
   }
 
-  // Upcoming task header
   Widget _buildUpcomingHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -303,11 +361,15 @@ class HomeScreen extends StatelessWidget {
           style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF25372B),
+            color: darkGreen,
           ),
         ),
+
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 6,
+          ),
           decoration: BoxDecoration(
             color: const Color(0xFFE3F2E7),
             borderRadius: BorderRadius.circular(8),
@@ -325,7 +387,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Responsive upcoming task list
   Widget _buildUpcomingTasks(bool isWide) {
     return LayoutBuilder(
       builder: (context, constraints) {
