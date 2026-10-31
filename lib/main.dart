@@ -10,11 +10,21 @@ import 'providers/task_provider.dart';
 import 'repositories/course_repository.dart';
 import 'repositories/task_repository.dart';
 
-import 'services/course_api_service.dart';
-import 'services/in_memory_task_data_source.dart';
+import 'services/task_supabase_service.dart';
+import 'services/course_supabase_service.dart';
+
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: '.env');
+
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    publishableKey: dotenv.env['SUPABASE_PUBLISHABLE_KEY']!,
+  );
 
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
@@ -29,9 +39,8 @@ Future<void> main() async {
     ),
   );
 
-  final courseRepository = CourseRepository(CourseApiService());
-  final taskRepository = TaskRepository(InMemoryTaskDataSource());
-
+  final courseRepository = CourseRepository(CourseSupabaseService());
+  final taskRepository = TaskRepository(TaskSupabaseService());
   runApp(
     MultiProvider(
       providers: [

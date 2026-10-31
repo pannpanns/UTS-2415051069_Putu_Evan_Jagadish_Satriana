@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../models/task.dart';
+import '../providers/course_provider.dart';
+import '../providers/task_provider.dart';
 import '../widgets/summary_card.dart';
 import '../widgets/task_card.dart';
 
@@ -8,12 +12,35 @@ class HomeScreen extends StatelessWidget {
 
   static const double maxContentWidth = 1200;
 
-  static const Color background = Color(0xFFF3F8F4);
   static const Color darkGreen = Color(0xFF25372B);
   static const Color primaryGreen = Color(0xFF2E8B57);
 
+  String _formatDate(DateTime date) {
+    const months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+
+    final day = date.day.toString().padLeft(2, '0');
+
+    return '$day ${months[date.month - 1]} ${date.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
+    final taskProvider = context.watch<TaskProvider>();
+    final courseProvider = context.watch<CourseProvider>();
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isLandscape = constraints.maxWidth > constraints.maxHeight;
@@ -33,42 +60,67 @@ class HomeScreen extends StatelessWidget {
             _buildHeader(isLandscape, horizontalPadding),
 
             Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.only(bottom: 24),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: maxContentWidth,
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        horizontalPadding,
-                        isLandscape ? 12 : 22,
-                        horizontalPadding,
-                        12,
+              child: RefreshIndicator(
+                color: primaryGreen,
+                onRefresh: () async {
+                  await Future.wait([
+                    taskProvider.loadTasks(),
+                    courseProvider.loadCourses(),
+                  ]);
+                },
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxWidth: maxContentWidth,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildGreeting(isLandscape),
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          isLandscape ? 12 : 22,
+                          horizontalPadding,
+                          12,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildGreeting(isLandscape),
 
-                          SizedBox(height: isLandscape ? 14 : 22),
+                            SizedBox(height: isLandscape ? 14 : 22),
 
-                          _buildSummary(contentWidth, isLandscape),
+                            if (taskProvider.isLoading ||
+                                courseProvider.isLoading)
+                              _buildLoadingState()
+                            else if (taskProvider.error != null ||
+                                courseProvider.error != null)
+                              _buildErrorState(taskProvider, courseProvider)
+                            else ...[
+                              _buildSummary(
+                                contentWidth,
+                                isLandscape,
+                                taskProvider,
+                              ),
 
-                          SizedBox(height: isLandscape ? 14 : 20),
+                              SizedBox(height: isLandscape ? 14 : 20),
 
-                          _buildProgressCard(),
+                              _buildProgressCard(taskProvider),
 
-                          SizedBox(height: isLandscape ? 18 : 28),
+                              SizedBox(height: isLandscape ? 18 : 28),
 
-                          _buildUpcomingHeader(),
+                              _buildUpcomingHeader(taskProvider.totalTasks),
 
-                          const SizedBox(height: 14),
+                              const SizedBox(height: 14),
 
-                          _buildUpcomingTasks(isWide),
-                        ],
+                              _buildUpcomingTasks(
+                                isWide,
+                                taskProvider.upcomingTasks,
+                                courseProvider,
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -199,7 +251,11 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummary(double contentWidth, bool isLandscape) {
+  Widget _buildSummary(
+    double contentWidth,
+    bool isLandscape,
+    TaskProvider provider,
+  ) {
     final crossAxisCount = contentWidth >= 680 ? 4 : 2;
 
     return Column(
@@ -226,34 +282,34 @@ class HomeScreen extends StatelessWidget {
             mainAxisSpacing: 12,
             mainAxisExtent: isLandscape ? 116 : 128,
           ),
-          children: const [
+          children: [
             SummaryCard(
               title: 'Total Tugas',
-              value: '12',
+              value: provider.totalTasks.toString(),
               icon: Icons.assignment_outlined,
-              color: Color(0xFF247A45),
-              backgroundColor: Color(0xFFE5F3E8),
+              color: const Color(0xFF247A45),
+              backgroundColor: const Color(0xFFE5F3E8),
             ),
             SummaryCard(
               title: 'Selesai',
-              value: '5',
+              value: provider.completedTasks.toString(),
               icon: Icons.check_circle_outline,
-              color: Color(0xFF198754),
-              backgroundColor: Color(0xFFDDF4E6),
+              color: const Color(0xFF198754),
+              backgroundColor: const Color(0xFFDDF4E6),
             ),
             SummaryCard(
               title: 'Dikerjakan',
-              value: '4',
+              value: provider.inProgressTasks.toString(),
               icon: Icons.pending_actions,
-              color: Color(0xFFC17A1B),
-              backgroundColor: Color(0xFFFFF1D8),
+              color: const Color(0xFFC17A1B),
+              backgroundColor: const Color(0xFFFFF1D8),
             ),
             SummaryCard(
               title: 'Belum Mulai',
-              value: '3',
+              value: provider.notStartedTasks.toString(),
               icon: Icons.schedule_outlined,
-              color: Color(0xFF667A6B),
-              backgroundColor: Color(0xFFE9F0EA),
+              color: const Color(0xFF667A6B),
+              backgroundColor: const Color(0xFFE9F0EA),
             ),
           ],
         ),
@@ -261,7 +317,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressCard() {
+  Widget _buildProgressCard(TaskProvider provider) {
+    final progress = provider.completionRate.clamp(0.0, 1.0);
+    final percentage = (progress * 100).round();
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(17),
@@ -284,9 +343,9 @@ class HomeScreen extends StatelessWidget {
                   color: darkGreen,
                 ),
               ),
-              const Text(
-                '42%',
-                style: TextStyle(
+              Text(
+                '$percentage%',
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: primaryGreen,
@@ -299,18 +358,19 @@ class HomeScreen extends StatelessWidget {
 
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: const LinearProgressIndicator(
-              value: 5 / 12,
+            child: LinearProgressIndicator(
+              value: progress.toDouble(),
               minHeight: 8,
-              backgroundColor: Color(0xFFE2ECE4),
-              valueColor: AlwaysStoppedAnimation<Color>(primaryGreen),
+              backgroundColor: const Color(0xFFE2ECE4),
+              valueColor: const AlwaysStoppedAnimation<Color>(primaryGreen),
             ),
           ),
 
           const SizedBox(height: 9),
 
           Text(
-            '5 dari 12 tugas telah diselesaikan.',
+            '${provider.completedTasks} dari '
+            '${provider.totalTasks} tugas telah diselesaikan.',
             style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
           ),
         ],
@@ -318,7 +378,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUpcomingHeader() {
+  Widget _buildUpcomingHeader(int totalTasks) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -337,9 +397,9 @@ class HomeScreen extends StatelessWidget {
             color: const Color(0xFFE3F2E7),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Text(
-            '3 tugas',
-            style: TextStyle(
+          child: Text(
+            '$totalTasks tugas',
+            style: const TextStyle(
               fontSize: 11,
               color: Color(0xFF236B43),
               fontWeight: FontWeight.w600,
@@ -350,7 +410,29 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUpcomingTasks(bool isWide) {
+  Widget _buildUpcomingTasks(
+    bool isWide,
+    List<Task> tasks,
+    CourseProvider courseProvider,
+  ) {
+    if (tasks.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(17),
+          border: Border.all(color: const Color(0xFFE2EBE4)),
+        ),
+        child: Center(
+          child: Text(
+            'Belum ada tugas.',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          ),
+        ),
+      );
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         const spacing = 12.0;
@@ -362,40 +444,70 @@ class HomeScreen extends StatelessWidget {
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
-          children: [
-            SizedBox(
+          children: tasks.map((task) {
+            return SizedBox(
               width: itemWidth,
-              child: const TaskCard(
-                title: 'Membuat Makalah',
-                subject: 'Pemrograman Mobile',
-                deadline: '02 November 2026',
-                priority: 'Tinggi',
-                status: 'Dikerjakan',
+              child: TaskCard(
+                title: task.title,
+                subject: courseProvider.courseNameById(task.courseId),
+                deadline: _formatDate(task.deadline),
+                priority: task.priority,
+                status: task.status,
               ),
-            ),
-            SizedBox(
-              width: itemWidth,
-              child: const TaskCard(
-                title: 'Laporan Praktikum',
-                subject: 'Basis Data',
-                deadline: '04 November 2026',
-                priority: 'Sedang',
-                status: 'Belum Mulai',
-              ),
-            ),
-            SizedBox(
-              width: itemWidth,
-              child: const TaskCard(
-                title: 'Presentasi Individu',
-                subject: 'Analisis Sistem',
-                deadline: '06 November 2026',
-                priority: 'Rendah',
-                status: 'Belum Mulai',
-              ),
-            ),
-          ],
+            );
+          }).toList(),
         );
       },
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return const SizedBox(
+      height: 260,
+      child: Center(child: CircularProgressIndicator()),
+    );
+  }
+
+  Widget _buildErrorState(
+    TaskProvider taskProvider,
+    CourseProvider courseProvider,
+  ) {
+    final message = taskProvider.error ?? courseProvider.error;
+
+    return SizedBox(
+      height: 260,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.cloud_off_outlined,
+              size: 42,
+              color: Color(0xFFD96A6A),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Gagal memuat Dashboard',
+              style: TextStyle(fontWeight: FontWeight.bold, color: darkGreen),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              message ?? 'Terjadi kesalahan.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: () {
+                taskProvider.loadTasks();
+                courseProvider.loadCourses();
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('Coba Lagi'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
