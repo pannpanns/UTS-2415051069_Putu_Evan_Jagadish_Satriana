@@ -7,6 +7,14 @@ import '../models/course.dart';
 import 'course_data_source.dart';
 
 class CourseApiService implements CourseDataSource {
+  @override
+  Future<Course> createCourse(Course course) async {
+    throw UnsupportedError(
+      'CourseApiService hanya digunakan untuk membaca data REST API. '
+      'Gunakan CourseSupabaseService untuk menambahkan mata kuliah.',
+    );
+  }
+
   CourseApiService({http.Client? client, Uri? endpoint})
     : _client = client ?? http.Client(),
       _endpoint = endpoint ?? Uri.parse(apiUrl);

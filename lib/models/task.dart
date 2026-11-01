@@ -47,9 +47,15 @@ class Task {
   }
 
   Map<String, dynamic> toJson() {
+    final parsedCourseId = int.tryParse(courseId);
+
+    if (parsedCourseId == null) {
+      throw FormatException('ID mata kuliah harus berupa angka.');
+    }
+
     return {
       'title': title.trim(),
-      'course_id': courseId,
+      'course_id': parsedCourseId,
       'deadline': _formatDate(deadline),
       'priority': priority,
       'status': status,

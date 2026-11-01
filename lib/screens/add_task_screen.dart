@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../models/task.dart';
+import '../providers/course_provider.dart';
+import '../providers/task_provider.dart';
+import 'course_screen.dart';
 
 class AddTaskScreen extends StatefulWidget {
   const AddTaskScreen({super.key});
@@ -11,18 +17,15 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final _titleController = TextEditingController();
-  final _subjectController = TextEditingController();
   final _deadlineController = TextEditingController();
 
+  String? _selectedCourseId;
   String? _selectedPriority;
   DateTime? _selectedDate;
-
-  final List<String> _priorities = ['Tinggi', 'Sedang', 'Rendah'];
 
   @override
   void dispose() {
     _titleController.dispose();
-    _subjectController.dispose();
     _deadlineController.dispose();
     super.dispose();
   }
@@ -77,6 +80,27 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     }
   }
 
+  Future<void> _openCourseManagement() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: const Color(0xFFF3F8F4),
+          appBar: AppBar(
+            title: const Text('Mata Kuliah'),
+            backgroundColor: const Color(0xFFF3F8F4),
+            surfaceTintColor: Colors.transparent,
+          ),
+          body: const SafeArea(child: CourseScreen()),
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
+    await context.read<CourseProvider>().loadCourses();
+  }
+
   InputDecoration _inputDecoration({
     required String hint,
     required IconData icon,
@@ -116,26 +140,114 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     );
   }
 
-  Widget _buildTextField({
-    required String label,
-    required String hint,
-    required IconData icon,
-    required TextEditingController controller,
-  }) {
+  Widget _buildTitleField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel(label),
+        _buildLabel('Nama Tugas'),
         TextFormField(
-          controller: controller,
-          decoration: _inputDecoration(hint: hint, icon: icon),
+          controller: _titleController,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: _inputDecoration(
+            hint: 'Masukkan nama tugas',
+            icon: Icons.assignment_outlined,
+          ),
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
-              return '$label wajib diisi';
+              return 'Nama tugas wajib diisi';
             }
+
+            if (value.trim().length < 3) {
+              return 'Nama tugas minimal 3 karakter';
+            }
+
             return null;
           },
         ),
+      ],
+    );
+  }
+
+  Widget _buildCourseField(CourseProvider provider) {
+    final availableIds = provider.courses
+        .map((course) => course.id.toString())
+        .toSet();
+
+    final selectedValue = availableIds.contains(_selectedCourseId)
+        ? _selectedCourseId
+        : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLabel('Mata Kuliah'),
+
+        DropdownButtonFormField<String>(
+          initialValue: selectedValue,
+          isExpanded: true,
+          decoration: _inputDecoration(
+            hint: provider.isLoading
+                ? 'Memuat mata kuliah...'
+                : 'Pilih mata kuliah',
+            icon: Icons.menu_book_outlined,
+          ),
+          items: provider.courses.map((course) {
+            return DropdownMenuItem<String>(
+              value: course.id.toString(),
+              child: Text(
+                '${course.code} - ${course.title}',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 13),
+              ),
+            );
+          }).toList(),
+          onChanged: provider.isLoading || provider.courses.isEmpty
+              ? null
+              : (value) {
+                  setState(() {
+                    _selectedCourseId = value;
+                  });
+                },
+          validator: (value) {
+            if (provider.isLoading) {
+              return 'Tunggu sampai mata kuliah selesai dimuat';
+            }
+
+            if (provider.courses.isEmpty) {
+              return 'Tambahkan mata kuliah terlebih dahulu';
+            }
+
+            if (value == null) {
+              return 'Mata kuliah wajib dipilih';
+            }
+
+            return null;
+          },
+        ),
+
+        const SizedBox(height: 6),
+
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _openCourseManagement,
+            icon: const Icon(Icons.add_circle_outline, size: 17),
+            label: const Text('Kelola / Tambah Mata Kuliah'),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF2E8B57),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+            ),
+          ),
+        ),
+
+        if (provider.error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Gagal memuat mata kuliah: ${provider.error}',
+              style: const TextStyle(color: Colors.red, fontSize: 11),
+            ),
+          ),
       ],
     );
   }
@@ -163,6 +275,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             if (value == null || value.isEmpty) {
               return 'Deadline wajib dipilih';
             }
+
             return null;
           },
         ),
@@ -182,7 +295,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             hint: 'Pilih tingkat prioritas',
             icon: Icons.flag_outlined,
           ),
-          items: _priorities.map((priority) {
+          items: Task.priorities.map((priority) {
             return DropdownMenuItem<String>(
               value: priority,
               child: Text(priority, style: const TextStyle(fontSize: 14)),
@@ -197,6 +310,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             if (value == null) {
               return 'Prioritas wajib dipilih';
             }
+
             return null;
           },
         ),
@@ -204,22 +318,57 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     );
   }
 
-  void _saveTask() {
-    if (!_formKey.currentState!.validate()) {
+  Future<void> _saveTask() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedDate == null ||
+        _selectedCourseId == null ||
+        _selectedPriority == null) {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Form berhasil divalidasi. Penyimpanan akan diaktifkan pada tahap CRUD.',
-        ),
+    final task = Task(
+      title: _titleController.text.trim(),
+      courseId: _selectedCourseId!,
+      deadline: DateTime(
+        _selectedDate!.year,
+        _selectedDate!.month,
+        _selectedDate!.day,
       ),
+      priority: _selectedPriority!,
+      status: Task.statusNotStarted,
     );
+
+    final provider = context.read<TaskProvider>();
+
+    final success = await provider.createTask(task);
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tugas berhasil ditambahkan.'),
+          backgroundColor: Color(0xFF2E8B57),
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.createError ?? 'Gagal menyimpan tugas.'),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final courseProvider = context.watch<CourseProvider>();
+    final taskProvider = context.watch<TaskProvider>();
+
     const background = Color(0xFFF3F8F4);
 
     return ColoredBox(
@@ -232,73 +381,68 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             backgroundColor: background,
             surfaceTintColor: Colors.transparent,
           ),
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.all(20),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 600),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildTextField(
-                            label: 'Nama Tugas',
-                            hint: 'Masukkan nama tugas',
-                            icon: Icons.assignment_outlined,
-                            controller: _titleController,
-                          ),
+          body: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            padding: const EdgeInsets.all(20),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTitleField(),
 
-                          const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                          _buildTextField(
-                            label: 'Mata Kuliah',
-                            hint: 'Masukkan nama mata kuliah',
-                            icon: Icons.menu_book_outlined,
-                            controller: _subjectController,
-                          ),
+                      _buildCourseField(courseProvider),
 
-                          const SizedBox(height: 20),
+                      const SizedBox(height: 12),
 
-                          _buildDeadlineField(),
+                      _buildDeadlineField(),
 
-                          const SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
-                          _buildPriorityField(),
+                      _buildPriorityField(),
 
-                          const SizedBox(height: 28),
+                      const SizedBox(height: 28),
 
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton.icon(
-                              onPressed: _saveTask,
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF2E8B57),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                              ),
-                              icon: const Icon(Icons.save_outlined),
-                              label: const Text(
-                                'Simpan Tugas',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: taskProvider.isCreating ? null : _saveTask,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF2E8B57),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                        ],
+                          icon: taskProvider.isCreating
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.save_outlined),
+                          label: Text(
+                            taskProvider.isCreating
+                                ? 'Menyimpan...'
+                                : 'Simpan Tugas',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-              );
-            },
+              ),
+            ),
           ),
         ),
       ),

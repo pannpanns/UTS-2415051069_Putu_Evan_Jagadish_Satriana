@@ -7,7 +7,7 @@ void main() {
       final task = Task.fromJson({
         'id': 'task-001',
         'title': 'Membuat Makalah',
-        'course_id': 'course-001',
+        'course_id': 1,
         'deadline': '2026-11-02',
         'priority': 'Tinggi',
         'status': 'Dikerjakan',
@@ -15,26 +15,27 @@ void main() {
 
       expect(task.id, 'task-001');
       expect(task.title, 'Membuat Makalah');
-      expect(task.courseId, 'course-001');
+      expect(task.courseId, '1');
       expect(task.deadline.day, 2);
       expect(task.priority, Task.priorityHigh);
       expect(task.status, Task.statusInProgress);
     });
 
-    test('converts model to JSON', () {
+    test('converts model to Supabase JSON', () {
       final task = Task(
         title: 'Laporan Praktikum',
-        courseId: 'course-002',
+        courseId: '2',
         deadline: DateTime(2026, 11, 4),
       );
 
       final json = task.toJson();
 
       expect(json['title'], 'Laporan Praktikum');
-      expect(json['course_id'], 'course-002');
+      expect(json['course_id'], 2);
       expect(json['deadline'], '2026-11-04');
       expect(json['priority'], 'Sedang');
       expect(json['status'], 'Belum Mulai');
+      expect(json.containsKey('id'), false);
     });
   });
 }

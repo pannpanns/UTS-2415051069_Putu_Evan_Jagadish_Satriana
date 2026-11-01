@@ -15,4 +15,15 @@ class CourseSupabaseService implements CourseDataSource {
 
     return data.map((row) => Course.fromJson(row)).toList();
   }
+
+  @override
+  Future<Course> createCourse(Course course) async {
+    final response = await _client
+        .from('courses')
+        .insert(course.toJson())
+        .select()
+        .single();
+
+    return Course.fromJson(response);
+  }
 }

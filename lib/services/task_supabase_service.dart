@@ -15,4 +15,15 @@ class TaskSupabaseService implements TaskDataSource {
 
     return data.map((row) => Task.fromJson(row)).toList();
   }
+
+  @override
+  Future<Task> createTask(Task task) async {
+    final response = await _client
+        .from('tasks')
+        .insert(task.toJson())
+        .select()
+        .single();
+
+    return Task.fromJson(response);
+  }
 }

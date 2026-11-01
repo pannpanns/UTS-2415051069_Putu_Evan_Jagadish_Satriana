@@ -9,4 +9,8 @@ class CourseRepository {
   Future<List<Course>> getCourses() {
     return dataSource.getCourses();
   }
+
+  Future<Course> createCourse(Course course) {
+    return dataSource.createCourse(course);
+  }
 }
