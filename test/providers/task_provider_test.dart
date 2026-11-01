@@ -46,6 +46,40 @@ void main() {
       expect(provider.totalTasks, 4);
       expect(provider.tasks.any((task) => task.title == 'Tugas Baru'), true);
       expect(provider.isCreating, false);
+      expect(provider.createError, isNull);
+    });
+
+    test('updates task and recalculates dashboard statistics', () async {
+      final provider = TaskProvider(TaskRepository(InMemoryTaskDataSource()));
+
+      await provider.loadTasks();
+
+      final originalTask = provider.tasks.first;
+
+      final updatedTask = originalTask.copyWith(
+        title: 'Makalah Pemrograman Mobile Revisi',
+        status: Task.statusCompleted,
+        priority: Task.priorityLow,
+      );
+
+      final success = await provider.updateTask(updatedTask);
+
+      expect(success, true);
+      expect(provider.totalTasks, 3);
+      expect(provider.completedTasks, 1);
+      expect(provider.inProgressTasks, 0);
+      expect(provider.notStartedTasks, 2);
+      expect(provider.completionRate, closeTo(1 / 3, 0.001));
+      expect(provider.isUpdating, false);
+      expect(provider.updateError, isNull);
+
+      final result = provider.tasks.firstWhere(
+        (task) => task.id == originalTask.id,
+      );
+
+      expect(result.title, 'Makalah Pemrograman Mobile Revisi');
+      expect(result.status, Task.statusCompleted);
+      expect(result.priority, Task.priorityLow);
     });
   });
 }

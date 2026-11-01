@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/course.dart';
 import '../providers/course_provider.dart';
 import '../widgets/error_view.dart';
-import 'add_course_screen.dart';
+import 'edit_course_screen.dart';
 
 class CourseScreen extends StatelessWidget {
   const CourseScreen({super.key});
@@ -22,13 +22,6 @@ class CourseScreen extends StatelessWidget {
     Color(0xFFC17A1B),
     Color(0xFF8270AA),
   ];
-
-  void _openAddCourse(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const AddCourseScreen()),
-    );
-  }
 
   String _statusLabel(String status) {
     switch (status) {
@@ -52,7 +45,25 @@ class CourseScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildCourseCard(Course course, int index) {
+  Future<void> _openEditCourse(BuildContext context, Course course) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => EditCourseScreen(course: course)),
+    );
+
+    if (!context.mounted) return;
+
+    if (result == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mata kuliah berhasil diperbarui.'),
+          backgroundColor: Color(0xFF2E8B57),
+        ),
+      );
+    }
+  }
+
+  Widget _buildCourseCard(BuildContext context, Course course, int index) {
     final color = _colors[index % _colors.length];
     final statusColor = _statusColor(course.status);
 
@@ -117,51 +128,13 @@ class CourseScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: Color(0xFF929B92)),
+          IconButton(
+            tooltip: 'Edit mata kuliah',
+            onPressed: () => _openEditCourse(context, course),
+            icon: const Icon(Icons.edit_outlined),
+            color: const Color(0xFF2E8B57),
+          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.menu_book_outlined,
-              size: 48,
-              color: Colors.grey.shade400,
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Belum ada mata kuliah',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF25372B),
-              ),
-            ),
-            const SizedBox(height: 7),
-            Text(
-              'Tambahkan mata kuliah agar bisa digunakan '
-              'pada jadwal tugas.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => _openAddCourse(context),
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Mata Kuliah'),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF2E8B57),
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -188,52 +161,25 @@ class CourseScreen extends StatelessWidget {
                 horizontalPadding,
                 16,
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Mata Kuliah',
-                          style: TextStyle(
-                            fontSize: 21,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF25372B),
-                          ),
-                        ),
-                        SizedBox(height: 7),
-                        Text(
-                          'Daftar mata kuliah yang sedang kamu pelajari.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF718075),
-                          ),
-                        ),
-                      ],
+                  const Text(
+                    'Mata Kuliah',
+                    style: TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF25372B),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: () => _openAddCourse(context),
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Tambah'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E8B57),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 11,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
+                  const SizedBox(height: 7),
+                  Text(
+                    'Daftar mata kuliah yang sedang kamu pelajari.',
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                   ),
                 ],
               ),
             ),
-
             Expanded(
               child: Builder(
                 builder: (context) {
@@ -249,7 +195,9 @@ class CourseScreen extends StatelessWidget {
                   }
 
                   if (provider.courses.isEmpty) {
-                    return _buildEmptyState(context);
+                    return const Center(
+                      child: Text('Data mata kuliah belum tersedia.'),
+                    );
                   }
 
                   return GridView.count(
@@ -265,8 +213,11 @@ class CourseScreen extends StatelessWidget {
                     childAspectRatio: crossAxisCount == 2 ? 3.2 : 3.5,
                     children: List.generate(
                       provider.courses.length,
-                      (index) =>
-                          _buildCourseCard(provider.courses[index], index),
+                      (index) => _buildCourseCard(
+                        context,
+                        provider.courses[index],
+                        index,
+                      ),
                     ),
                   );
                 },

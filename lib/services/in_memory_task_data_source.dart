@@ -29,22 +29,38 @@ class InMemoryTaskDataSource implements TaskDataSource {
     ),
   ];
 
-  int _nextId = 4;
-
   @override
   Future<List<Task>> getTasks() async {
-    return List.unmodifiable(_tasks);
+    return List<Task>.from(_tasks);
   }
 
   @override
   Future<Task> createTask(Task task) async {
     final createdTask = task.copyWith(
-      id: 'task-${_nextId.toString().padLeft(3, '0')}',
+      id: task.id ?? DateTime.now().microsecondsSinceEpoch.toString(),
     );
 
-    _nextId++;
     _tasks.add(createdTask);
 
     return createdTask;
+  }
+
+  @override
+  Future<Task> updateTask(Task task) async {
+    final taskId = task.id;
+
+    if (taskId == null || taskId.isEmpty) {
+      throw ArgumentError('ID tugas tidak valid.');
+    }
+
+    final index = _tasks.indexWhere((item) => item.id == taskId);
+
+    if (index == -1) {
+      throw StateError('Tugas tidak ditemukan.');
+    }
+
+    _tasks[index] = task;
+
+    return task;
   }
 }

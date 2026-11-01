@@ -4,4 +4,6 @@ abstract class TaskDataSource {
   Future<List<Task>> getTasks();
 
   Future<Task> createTask(Task task);
+
+  Future<Task> updateTask(Task task);
 }

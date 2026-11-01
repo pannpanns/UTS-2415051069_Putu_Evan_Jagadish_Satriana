@@ -12,19 +12,21 @@ class TaskProvider extends ChangeNotifier {
 
   bool _isLoading = false;
   bool _isCreating = false;
+  bool _isUpdating = false;
 
   String? _error;
   String? _createError;
+  String? _updateError;
 
   List<Task> get tasks => List.unmodifiable(_tasks);
 
   bool get isLoading => _isLoading;
-
   bool get isCreating => _isCreating;
+  bool get isUpdating => _isUpdating;
 
   String? get error => _error;
-
   String? get createError => _createError;
+  String? get updateError => _updateError;
 
   int get totalTasks => _tasks.length;
 
@@ -78,20 +80,54 @@ class TaskProvider extends ChangeNotifier {
     try {
       final createdTask = await _repository.createTask(task);
 
-      final updatedTasks = [..._tasks, createdTask];
-
-      updatedTasks.sort((a, b) => a.deadline.compareTo(b.deadline));
-
-      _tasks = updatedTasks;
+      _tasks = [..._tasks, createdTask];
+      _tasks.sort((a, b) => a.deadline.compareTo(b.deadline));
       _error = null;
 
       return true;
     } catch (e) {
       _createError = e.toString().replaceFirst('Exception: ', '');
-
       return false;
     } finally {
       _isCreating = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> updateTask(Task task) async {
+    if (_isUpdating) return false;
+
+    final taskId = task.id;
+
+    if (taskId == null || taskId.isEmpty) {
+      _updateError = 'ID tugas tidak valid.';
+      notifyListeners();
+      return false;
+    }
+
+    _isUpdating = true;
+    _updateError = null;
+    notifyListeners();
+
+    try {
+      final updatedTask = await _repository.updateTask(task);
+
+      final index = _tasks.indexWhere((item) => item.id == updatedTask.id);
+
+      if (index == -1) {
+        throw StateError('Tugas yang diperbarui tidak ditemukan di daftar.');
+      }
+
+      _tasks[index] = updatedTask;
+      _tasks.sort((a, b) => a.deadline.compareTo(b.deadline));
+      _error = null;
+
+      return true;
+    } catch (e) {
+      _updateError = e.toString().replaceFirst('Exception: ', '');
+      return false;
+    } finally {
+      _isUpdating = false;
       notifyListeners();
     }
   }

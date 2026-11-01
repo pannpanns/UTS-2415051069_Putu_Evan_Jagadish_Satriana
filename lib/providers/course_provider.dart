@@ -12,19 +12,21 @@ class CourseProvider extends ChangeNotifier {
 
   bool _isLoading = false;
   bool _isCreating = false;
+  bool _isUpdating = false;
 
   String? _error;
   String? _createError;
+  String? _updateError;
 
   List<Course> get courses => List.unmodifiable(_courses);
 
   bool get isLoading => _isLoading;
-
   bool get isCreating => _isCreating;
+  bool get isUpdating => _isUpdating;
 
   String? get error => _error;
-
   String? get createError => _createError;
+  String? get updateError => _updateError;
 
   Future<void> loadCourses() async {
     if (_isLoading) return;
@@ -53,11 +55,10 @@ class CourseProvider extends ChangeNotifier {
     try {
       final createdCourse = await _repository.createCourse(course);
 
-      final updatedCourses = [..._courses, createdCourse];
+      _courses = [..._courses, createdCourse];
 
-      updatedCourses.sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
+      _courses.sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
 
-      _courses = updatedCourses;
       _error = null;
 
       return true;
@@ -67,6 +68,45 @@ class CourseProvider extends ChangeNotifier {
       return false;
     } finally {
       _isCreating = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> updateCourse(Course course) async {
+    if (_isUpdating) return false;
+
+    if (course.id == null) {
+      _updateError = 'ID mata kuliah tidak valid.';
+      notifyListeners();
+      return false;
+    }
+
+    _isUpdating = true;
+    _updateError = null;
+    notifyListeners();
+
+    try {
+      final updatedCourse = await _repository.updateCourse(course);
+
+      final index = _courses.indexWhere((item) => item.id == updatedCourse.id);
+
+      if (index == -1) {
+        throw StateError('Mata kuliah tidak ditemukan.');
+      }
+
+      _courses[index] = updatedCourse;
+
+      _courses = List<Course>.from(_courses);
+
+      _error = null;
+
+      return true;
+    } catch (e) {
+      _updateError = e.toString().replaceFirst('Exception: ', '');
+
+      return false;
+    } finally {
+      _isUpdating = false;
       notifyListeners();
     }
   }

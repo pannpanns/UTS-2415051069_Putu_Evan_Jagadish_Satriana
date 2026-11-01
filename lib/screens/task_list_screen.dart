@@ -1,43 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/task.dart';
 import '../providers/course_provider.dart';
 import '../providers/task_provider.dart';
 import '../widgets/task_card.dart';
-
-import 'task_detail_screen.dart';
 import 'add_task_screen.dart';
+import 'task_detail_screen.dart';
+import 'edit_task_screen.dart';
 
 class TaskListScreen extends StatelessWidget {
   const TaskListScreen({super.key});
 
-  void _openAddTask(BuildContext context) {
-    Navigator.push(
+  Future<void> _openAddTask(BuildContext context) async {
+    final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => const AddTaskScreen()),
     );
+
+    if (!context.mounted) return;
+
+    if (result == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tugas berhasil ditambahkan.'),
+          backgroundColor: Color(0xFF2E8B57),
+        ),
+      );
+    }
   }
 
-  void _openDetail(
-    BuildContext context, {
-    required String title,
-    required String subject,
-    required String deadline,
-    required String priority,
-    required String status,
-  }) {
+  void _openDetail(BuildContext context, Task task) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => TaskDetailScreen(
-          title: title,
-          subject: subject,
-          deadline: deadline,
-          priority: priority,
-          status: status,
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => TaskDetailScreen(task: task)),
     );
+  }
+
+  Future<void> _openEditTask(BuildContext context, Task task) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => EditTaskScreen(task: task)),
+    );
+
+    if (!context.mounted) return;
+
+    if (result == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tugas berhasil diperbarui.'),
+          backgroundColor: Color(0xFF2E8B57),
+        ),
+      );
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -56,34 +71,24 @@ class TaskListScreen extends StatelessWidget {
       'Desember',
     ];
 
-    final day = date.day.toString().padLeft(2, '0');
-
-    return '$day ${months[date.month - 1]} ${date.year}';
+    return '${date.day.toString().padLeft(2, '0')} '
+        '${months[date.month - 1]} ${date.year}';
   }
 
   Widget _buildTaskItem(
-    BuildContext context, {
-    required String title,
-    required String subject,
-    required String deadline,
-    required String priority,
-    required String status,
-  }) {
+    BuildContext context,
+    Task task,
+    CourseProvider courseProvider,
+  ) {
     return GestureDetector(
-      onTap: () => _openDetail(
-        context,
-        title: title,
-        subject: subject,
-        deadline: deadline,
-        priority: priority,
-        status: status,
-      ),
+      onTap: () => _openDetail(context, task),
       child: TaskCard(
-        title: title,
-        subject: subject,
-        deadline: deadline,
-        priority: priority,
-        status: status,
+        title: task.title,
+        subject: courseProvider.courseNameById(task.courseId),
+        deadline: _formatDate(task.deadline),
+        priority: task.priority,
+        status: task.status,
+        onEdit: () => _openEditTask(context, task),
       ),
     );
   }
@@ -97,7 +102,7 @@ class TaskListScreen extends StatelessWidget {
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 700;
 
-        final horizontalPadding = constraints.maxWidth >= 700 ? 32.0 : 20.0;
+        final horizontalPadding = isWide ? 32.0 : 20.0;
 
         final contentWidth = constraints.maxWidth - horizontalPadding * 2;
 
@@ -158,7 +163,6 @@ class TaskListScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             Expanded(
               child: Builder(
                 builder: (context) {
@@ -206,13 +210,8 @@ class TaskListScreen extends StatelessWidget {
                             width: cardWidth,
                             child: _buildTaskItem(
                               context,
-                              title: task.title,
-                              subject: courseProvider.courseNameById(
-                                task.courseId,
-                              ),
-                              deadline: _formatDate(task.deadline),
-                              priority: task.priority,
-                              status: task.status,
+                              task,
+                              courseProvider,
                             ),
                           );
                         }).toList(),

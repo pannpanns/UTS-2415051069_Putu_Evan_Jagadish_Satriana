@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../models/task.dart';
+import '../providers/course_provider.dart';
+import '../providers/task_provider.dart';
 
 class EditTaskScreen extends StatefulWidget {
-  final String title;
-  final String subject;
-  final String deadline;
-  final String priority;
+  final Task task;
 
-  const EditTaskScreen({
-    super.key,
-    required this.title,
-    required this.subject,
-    required this.deadline,
-    required this.priority,
-  });
+  const EditTaskScreen({super.key, required this.task});
 
   @override
   State<EditTaskScreen> createState() => _EditTaskScreenState();
@@ -20,112 +16,62 @@ class EditTaskScreen extends StatefulWidget {
 
 class _EditTaskScreenState extends State<EditTaskScreen> {
   final _formKey = GlobalKey<FormState>();
-
   late final TextEditingController _titleController;
-  late final TextEditingController _subjectController;
-  late final TextEditingController _deadlineController;
 
-  String? _selectedPriority;
-  DateTime? _selectedDate;
+  late String? _selectedCourseId;
+  late DateTime _selectedDate;
+  late String _selectedPriority;
+  late String _selectedStatus;
 
-  final List<String> _priorities = ['Tinggi', 'Sedang', 'Rendah'];
-
-  static const List<String> _months = [
-    'Januari',
-    'Februari',
-    'Maret',
-    'April',
-    'Mei',
-    'Juni',
-    'Juli',
-    'Agustus',
-    'September',
-    'Oktober',
-    'November',
-    'Desember',
-  ];
+  static const Color _green = Color(0xFF2E8B57);
+  static const Color _darkGreen = Color(0xFF25372B);
+  static const Color _background = Color(0xFFF3F8F4);
 
   @override
   void initState() {
     super.initState();
 
-    _titleController = TextEditingController(text: widget.title);
+    _titleController = TextEditingController(text: widget.task.title);
 
-    _subjectController = TextEditingController(text: widget.subject);
+    _selectedCourseId = widget.task.courseId;
+    _selectedDate = widget.task.deadline;
 
-    _deadlineController = TextEditingController(text: widget.deadline);
+    _selectedPriority = Task.priorities.contains(widget.task.priority)
+        ? widget.task.priority
+        : Task.priorityMedium;
 
-    _selectedPriority = _priorities.contains(widget.priority)
-        ? widget.priority
-        : null;
-
-    _selectedDate = _parseDate(widget.deadline);
+    _selectedStatus = Task.statuses.contains(widget.task.status)
+        ? widget.task.status
+        : Task.statusNotStarted;
   }
 
   @override
   void dispose() {
     _titleController.dispose();
-    _subjectController.dispose();
-    _deadlineController.dispose();
     super.dispose();
   }
 
-  DateTime _parseDate(String value) {
-    final parts = value.trim().split(RegExp(r'\s+'));
-
-    if (parts.length == 3) {
-      final day = int.tryParse(parts[0]);
-
-      final month =
-          _months.indexWhere(
-            (item) => item.toLowerCase() == parts[1].toLowerCase(),
-          ) +
-          1;
-
-      final year = int.tryParse(parts[2]);
-
-      if (day != null && month > 0 && year != null) {
-        return DateTime(year, month, day);
-      }
-    }
-
-    return DateTime.now();
-  }
-
   String _formatDate(DateTime date) {
-    return '${date.day} ${_months[date.month - 1]} ${date.year}';
+    const months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+
+    return '${date.day.toString().padLeft(2, '0')} '
+        '${months[date.month - 1]} ${date.year}';
   }
 
-  Future<void> _selectDate() async {
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF2E8B57),
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Color(0xFF25372B),
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (pickedDate != null) {
-      setState(() {
-        _selectedDate = pickedDate;
-        _deadlineController.text = _formatDate(pickedDate);
-      });
-    }
-  }
-
-  InputDecoration _inputDecoration({required IconData icon}) {
+  InputDecoration _decoration({required IconData icon}) {
     return InputDecoration(
       prefixIcon: Icon(icon, size: 20),
       filled: true,
@@ -141,132 +87,113 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF2E8B57), width: 1.5),
+        borderSide: const BorderSide(color: _green, width: 1.5),
       ),
     );
   }
 
-  Widget _buildLabel(String label) {
+  Widget _label(String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
-        label,
+        value,
         style: const TextStyle(
-          fontWeight: FontWeight.w600,
           fontSize: 13,
-          color: Color(0xFF25372B),
+          fontWeight: FontWeight.w600,
+          color: _darkGreen,
         ),
       ),
     );
   }
 
-  Widget _buildTextField({
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel(label),
-        TextFormField(
-          controller: controller,
-          decoration: _inputDecoration(icon: icon),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return '$label wajib diisi';
-            }
-            return null;
-          },
-        ),
-      ],
+  Future<void> _selectDate() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: _green,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: _darkGreen,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
-  }
 
-  Widget _buildDeadlineField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel('Deadline'),
-        TextFormField(
-          controller: _deadlineController,
-          readOnly: true,
-          onTap: _selectDate,
-          decoration: _inputDecoration(icon: Icons.calendar_month_outlined)
-              .copyWith(
-                suffixIcon: const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: Color(0xFF718075),
-                ),
-              ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Deadline wajib dipilih';
-            }
-            return null;
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPriorityField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildLabel('Prioritas'),
-        DropdownButtonFormField<String>(
-          initialValue: _selectedPriority,
-          isExpanded: true,
-          decoration: _inputDecoration(icon: Icons.flag_outlined),
-          items: _priorities.map((priority) {
-            return DropdownMenuItem<String>(
-              value: priority,
-              child: Text(priority),
-            );
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              _selectedPriority = value;
-            });
-          },
-          validator: (value) {
-            if (value == null) {
-              return 'Prioritas wajib dipilih';
-            }
-            return null;
-          },
-        ),
-      ],
-    );
-  }
-
-  void _saveChanges() {
-    if (!_formKey.currentState!.validate()) {
-      return;
+    if (pickedDate != null) {
+      setState(() {
+        _selectedDate = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+        );
+      });
     }
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Form berhasil divalidasi. Pembaruan akan diaktifkan pada tahap CRUD.',
-        ),
+  Future<void> _saveChanges() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final courseId = _selectedCourseId;
+
+    if (courseId == null || courseId.isEmpty) return;
+
+    final updatedTask = widget.task.copyWith(
+      title: _titleController.text.trim(),
+      courseId: courseId,
+      deadline: DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
       ),
+      priority: _selectedPriority,
+      status: _selectedStatus,
     );
+
+    final provider = context.read<TaskProvider>();
+
+    final success = await provider.updateTask(updatedTask);
+
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.updateError ?? 'Gagal memperbarui tugas.'),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    const background = Color(0xFFF3F8F4);
+    final courseProvider = context.watch<CourseProvider>();
+    final taskProvider = context.watch<TaskProvider>();
+
+    final courses = courseProvider.courses;
+
+    final hasSelectedCourse = courses.any(
+      (course) => course.id?.toString() == _selectedCourseId,
+    );
 
     return ColoredBox(
-      color: background,
+      color: _background,
       child: SafeArea(
         child: Scaffold(
-          backgroundColor: background,
+          backgroundColor: _background,
           appBar: AppBar(
             title: const Text('Edit Tugas'),
-            backgroundColor: background,
+            backgroundColor: _background,
             surfaceTintColor: Colors.transparent,
           ),
           body: SingleChildScrollView(
@@ -280,46 +207,176 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildTextField(
-                        label: 'Nama Tugas',
+                      _label('Nama Tugas'),
+                      TextFormField(
                         controller: _titleController,
-                        icon: Icons.assignment_outlined,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: _decoration(icon: Icons.assignment_outlined)
+                            .copyWith(hintText: 'Masukkan nama tugas'),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Nama tugas wajib diisi';
+                          }
+                          return null;
+                        },
                       ),
 
                       const SizedBox(height: 20),
 
-                      _buildTextField(
-                        label: 'Mata Kuliah',
-                        controller: _subjectController,
-                        icon: Icons.menu_book_outlined,
+                      _label('Mata Kuliah'),
+                      DropdownButtonFormField<String>(
+                        initialValue: hasSelectedCourse
+                            ? _selectedCourseId
+                            : null,
+                        isExpanded: true,
+                        decoration: _decoration(icon: Icons.menu_book_outlined),
+                        hint: const Text('Pilih mata kuliah'),
+                        items: courses.map((course) {
+                          return DropdownMenuItem<String>(
+                            value: course.id.toString(),
+                            child: Text(
+                              '${course.title} (${course.code})',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: courseProvider.isLoading
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _selectedCourseId = value;
+                                });
+                              },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Mata kuliah wajib dipilih';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      if (courseProvider.error != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Gagal memuat mata kuliah: '
+                          '${courseProvider.error}',
+                          style: TextStyle(
+                            color: Colors.red.shade700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 20),
+
+                      _label('Deadline'),
+                      InkWell(
+                        onTap: _selectDate,
+                        borderRadius: BorderRadius.circular(12),
+                        child: InputDecorator(
+                          decoration:
+                              _decoration(icon: Icons.calendar_month_outlined)
+                                  .copyWith(
+                                    suffixIcon: const Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      color: Color(0xFF718075),
+                                    ),
+                                  ),
+                          child: Text(_formatDate(_selectedDate)),
+                        ),
                       ),
 
                       const SizedBox(height: 20),
 
-                      _buildDeadlineField(),
+                      _label('Prioritas'),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedPriority,
+                        isExpanded: true,
+                        decoration: _decoration(icon: Icons.flag_outlined),
+                        items: Task.priorities.map((priority) {
+                          return DropdownMenuItem<String>(
+                            value: priority,
+                            child: Text(priority),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedPriority = value;
+                            });
+                          }
+                        },
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Prioritas wajib dipilih';
+                          }
+                          return null;
+                        },
+                      ),
 
                       const SizedBox(height: 20),
 
-                      _buildPriorityField(),
+                      _label('Status Tugas'),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedStatus,
+                        isExpanded: true,
+                        decoration: _decoration(
+                          icon: Icons.pending_actions_outlined,
+                        ),
+                        items: Task.statuses.map((status) {
+                          return DropdownMenuItem<String>(
+                            value: status,
+                            child: Text(status),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedStatus = value;
+                            });
+                          }
+                        },
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Status wajib dipilih';
+                          }
+                          return null;
+                        },
+                      ),
 
                       const SizedBox(height: 28),
 
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton.icon(
-                          onPressed: _saveChanges,
+                          onPressed:
+                              taskProvider.isUpdating ||
+                                  courseProvider.isLoading
+                              ? null
+                              : _saveChanges,
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E8B57),
+                            backgroundColor: _green,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                          icon: const Icon(Icons.save_outlined),
-                          label: const Text(
-                            'Simpan Perubahan',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                          icon: taskProvider.isUpdating
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.save_outlined),
+                          label: Text(
+                            taskProvider.isUpdating
+                                ? 'Menyimpan Perubahan...'
+                                : 'Simpan Perubahan',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
                       ),

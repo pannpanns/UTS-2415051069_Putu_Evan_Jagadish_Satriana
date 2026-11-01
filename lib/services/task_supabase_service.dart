@@ -26,4 +26,22 @@ class TaskSupabaseService implements TaskDataSource {
 
     return Task.fromJson(response);
   }
+
+  @override
+  Future<Task> updateTask(Task task) async {
+    final taskId = task.id;
+
+    if (taskId == null || taskId.isEmpty) {
+      throw ArgumentError('ID tugas tidak valid.');
+    }
+
+    final response = await _client
+        .from('tasks')
+        .update(task.toJson())
+        .eq('id', taskId)
+        .select()
+        .single();
+
+    return Task.fromJson(response);
+  }
 }

@@ -13,4 +13,8 @@ class TaskRepository {
   Future<Task> createTask(Task task) {
     return dataSource.createTask(task);
   }
+
+  Future<Task> updateTask(Task task) {
+    return dataSource.updateTask(task);
+  }
 }

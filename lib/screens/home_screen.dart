@@ -6,14 +6,32 @@ import '../providers/course_provider.dart';
 import '../providers/task_provider.dart';
 import '../widgets/summary_card.dart';
 import '../widgets/task_card.dart';
+import 'edit_task_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   static const double maxContentWidth = 1200;
-
   static const Color darkGreen = Color(0xFF25372B);
   static const Color primaryGreen = Color(0xFF2E8B57);
+
+  Future<void> _openEditTask(BuildContext context, Task task) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => EditTaskScreen(task: task)),
+    );
+
+    if (!context.mounted) return;
+
+    if (result == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tugas berhasil diperbarui.'),
+          backgroundColor: primaryGreen,
+        ),
+      );
+    }
+  }
 
   String _formatDate(DateTime date) {
     const months = [
@@ -32,7 +50,6 @@ class HomeScreen extends StatelessWidget {
     ];
 
     final day = date.day.toString().padLeft(2, '0');
-
     return '$day ${months[date.month - 1]} ${date.year}';
   }
 
@@ -44,7 +61,6 @@ class HomeScreen extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isLandscape = constraints.maxWidth > constraints.maxHeight;
-
         final horizontalPadding = constraints.maxWidth >= 700 ? 32.0 : 20.0;
 
         final contentWidth =
@@ -58,7 +74,6 @@ class HomeScreen extends StatelessWidget {
         return Column(
           children: [
             _buildHeader(isLandscape, horizontalPadding),
-
             Expanded(
               child: RefreshIndicator(
                 color: primaryGreen,
@@ -87,9 +102,7 @@ class HomeScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildGreeting(isLandscape),
-
                             SizedBox(height: isLandscape ? 14 : 22),
-
                             if (taskProvider.isLoading ||
                                 courseProvider.isLoading)
                               _buildLoadingState()
@@ -102,18 +115,13 @@ class HomeScreen extends StatelessWidget {
                                 isLandscape,
                                 taskProvider,
                               ),
-
                               SizedBox(height: isLandscape ? 14 : 20),
-
                               _buildProgressCard(taskProvider),
-
                               SizedBox(height: isLandscape ? 18 : 28),
-
                               _buildUpcomingHeader(taskProvider.totalTasks),
-
                               const SizedBox(height: 14),
-
                               _buildUpcomingTasks(
+                                context,
                                 isWide,
                                 taskProvider.upcomingTasks,
                                 courseProvider,
@@ -173,9 +181,7 @@ class HomeScreen extends StatelessWidget {
                       size: 25,
                     ),
                   ),
-
                   const SizedBox(width: 12),
-
                   const Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -202,9 +208,7 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   const SizedBox(width: 10),
-
                   Container(
                     width: 38,
                     height: 38,
@@ -269,9 +273,7 @@ class HomeScreen extends StatelessWidget {
             color: darkGreen,
           ),
         ),
-
         const SizedBox(height: 10),
-
         GridView(
           padding: EdgeInsets.zero,
           shrinkWrap: true,
@@ -353,9 +355,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-
           const SizedBox(height: 12),
-
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
@@ -365,9 +365,7 @@ class HomeScreen extends StatelessWidget {
               valueColor: const AlwaysStoppedAnimation<Color>(primaryGreen),
             ),
           ),
-
           const SizedBox(height: 9),
-
           Text(
             '${provider.completedTasks} dari '
             '${provider.totalTasks} tugas telah diselesaikan.',
@@ -390,7 +388,6 @@ class HomeScreen extends StatelessWidget {
             color: darkGreen,
           ),
         ),
-
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
@@ -411,6 +408,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildUpcomingTasks(
+    BuildContext context,
     bool isWide,
     List<Task> tasks,
     CourseProvider courseProvider,
@@ -453,6 +451,7 @@ class HomeScreen extends StatelessWidget {
                 deadline: _formatDate(task.deadline),
                 priority: task.priority,
                 status: task.status,
+                onEdit: () => _openEditTask(context, task),
               ),
             );
           }).toList(),

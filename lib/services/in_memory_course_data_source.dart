@@ -1,7 +1,7 @@
 import '../models/course.dart';
 import 'course_data_source.dart';
 
-class InMemoryCourseDataSource implements CourseDataSource {
+class InMemoryCourseDataSource implements CourseWritableDataSource {
   final List<Course> _courses = [
     const Course(
       id: 1,
@@ -33,20 +33,42 @@ class InMemoryCourseDataSource implements CourseDataSource {
     ),
   ];
 
-  int _nextId = 5;
-
   @override
   Future<List<Course>> getCourses() async {
-    return List.unmodifiable(_courses);
+    return List<Course>.from(_courses);
   }
 
   @override
   Future<Course> createCourse(Course course) async {
-    final createdCourse = course.copyWith(id: _nextId);
+    var nextId = 1;
 
-    _nextId++;
+    for (final item in _courses) {
+      if (item.id != null && item.id! >= nextId) {
+        nextId = item.id! + 1;
+      }
+    }
+
+    final createdCourse = course.copyWith(id: nextId);
+
     _courses.add(createdCourse);
 
     return createdCourse;
+  }
+
+  @override
+  Future<Course> updateCourse(Course course) async {
+    if (course.id == null) {
+      throw ArgumentError('ID mata kuliah tidak valid.');
+    }
+
+    final index = _courses.indexWhere((item) => item.id == course.id);
+
+    if (index == -1) {
+      throw StateError('Mata kuliah tidak ditemukan.');
+    }
+
+    _courses[index] = course;
+
+    return course;
   }
 }
