@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,6 +7,7 @@ import '../providers/course_provider.dart';
 import '../providers/task_provider.dart';
 import '../widgets/error_view.dart';
 import '../widgets/confirm_delete_dialog.dart';
+import 'add_course_screen.dart';
 import 'edit_course_screen.dart';
 
 class CourseScreen extends StatelessWidget {
@@ -47,34 +49,65 @@ class CourseScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _openEditCourse(BuildContext context, Course course) async {
+  void _showMessage(
+    BuildContext context,
+    String message, {
+    bool isError = false,
+  }) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: isError
+              ? Colors.red.shade700
+              : const Color(0xFF2E8B57),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
+  Future<void> _openAddCourse(BuildContext context) async {
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AddCourseScreen(),
+      ),
+    );
+  }
+
+  Future<void> _openEditCourse(
+    BuildContext context,
+    Course course,
+  ) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => EditCourseScreen(course: course)),
+      MaterialPageRoute(
+        builder: (_) => EditCourseScreen(course: course),
+      ),
     );
 
     if (!context.mounted) return;
 
     if (result == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mata kuliah berhasil diperbarui.'),
-          backgroundColor: Color(0xFF2E8B57),
-        ),
+      _showMessage(
+        context,
+        'Mata kuliah berhasil diperbarui.',
       );
     }
   }
 
-  Future<void> _deleteCourse(BuildContext context, Course course) async {
+  Future<void> _deleteCourse(
+    BuildContext context,
+    Course course,
+  ) async {
     final taskProvider = context.read<TaskProvider>();
 
     if (taskProvider.isLoading || taskProvider.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Data tugas belum siap. Coba lagi setelah data dimuat.',
-          ),
-        ),
+      _showMessage(
+        context,
+        'Data tugas belum siap. Coba lagi setelah data dimuat.',
+        isError: true,
       );
       return;
     }
@@ -84,13 +117,11 @@ class CourseScreen extends StatelessWidget {
     );
 
     if (isUsed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Mata kuliah masih digunakan oleh tugas. '
-            'Ubah atau hapus tugas terkait terlebih dahulu.',
-          ),
-        ),
+      _showMessage(
+        context,
+        'Mata kuliah masih digunakan oleh tugas. '
+        'Ubah atau hapus tugas terkait terlebih dahulu.',
+        isError: true,
       );
       return;
     }
@@ -105,37 +136,98 @@ class CourseScreen extends StatelessWidget {
 
     if (!confirmed || !context.mounted) return;
 
-    if (course.id == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ID mata kuliah tidak valid.'),
-          backgroundColor: Colors.red,
-        ),
+    final courseId = course.id;
+
+    if (courseId == null) {
+      _showMessage(
+        context,
+        'ID mata kuliah tidak valid.',
+        isError: true,
       );
       return;
     }
 
     final provider = context.read<CourseProvider>();
-
-    final success = await provider.deleteCourse(course.id!);
+    final success = await provider.deleteCourse(courseId);
 
     if (!context.mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mata kuliah berhasil dihapus.'),
-          backgroundColor: Color(0xFF2E8B57),
-        ),
+      _showMessage(
+        context,
+        'Mata kuliah berhasil dihapus.',
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(provider.deleteError ?? 'Gagal menghapus mata kuliah.'),
-          backgroundColor: Colors.red.shade700,
-        ),
+      _showMessage(
+        context,
+        provider.deleteError ?? 'Gagal menghapus mata kuliah.',
+        isError: true,
       );
     }
+  }
+
+  Widget _buildHeader(
+    BuildContext context,
+    double horizontalPadding,
+  ) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        20,
+        horizontalPadding,
+        16,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mata Kuliah',
+                  style: TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF25372B),
+                  ),
+                ),
+                SizedBox(height: 7),
+                Text(
+                  'Kelola daftar mata kuliahmu.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF718075),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          FilledButton.icon(
+            onPressed: () => _openAddCourse(context),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Tambah'),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF2E8B57),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 13,
+                vertical: 11,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildCourseCard(
@@ -148,28 +240,44 @@ class CourseScreen extends StatelessWidget {
     final statusColor = _statusColor(course.status);
 
     return Container(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 13,
+        vertical: 12,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2EBE4)),
+        border: Border.all(
+          color: const Color(0xFFE2EBE4),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1B5E3B).withValues(alpha: 0.025),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(_icons[index % _icons.length], color: color, size: 23),
+            child: Icon(
+              _icons[index % _icons.length],
+              color: color,
+              size: 22,
+            ),
           ),
-          const SizedBox(width: 13),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   course.title,
@@ -177,14 +285,20 @@ class CourseScreen extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    fontSize: 13,
+                    height: 1.3,
                     color: Color(0xFF25372B),
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 5),
                 Text(
                   '${course.code} • ${course.credits} SKS',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
                 const SizedBox(height: 7),
                 Container(
@@ -208,15 +322,28 @@ class CourseScreen extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(width: 4),
           IconButton(
             tooltip: 'Edit mata kuliah',
-            onPressed: () => _openEditCourse(context, course),
-            icon: const Icon(Icons.edit_outlined),
+            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints(
+              minWidth: 36,
+              minHeight: 36,
+            ),
+            onPressed: isDeleting
+                ? null
+                : () => _openEditCourse(context, course),
+            icon: const Icon(
+              Icons.edit_outlined,
+              size: 19,
+            ),
             color: const Color(0xFF2E8B57),
           ),
           PopupMenuButton<String>(
             enabled: !isDeleting,
             tooltip: 'Pilihan mata kuliah',
+            padding: EdgeInsets.zero,
+            iconSize: 20,
             onSelected: (value) {
               if (value == 'delete') {
                 _deleteCourse(context, course);
@@ -235,7 +362,9 @@ class CourseScreen extends StatelessWidget {
                     SizedBox(width: 10),
                     Text(
                       'Hapus mata kuliah',
-                      style: TextStyle(color: Color(0xFFD94C4C)),
+                      style: TextStyle(
+                        color: Color(0xFFD94C4C),
+                      ),
                     ),
                   ],
                 ),
@@ -247,89 +376,163 @@ class CourseScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 76,
+              height: 76,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE5F3E8),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Icon(
+                Icons.menu_book_outlined,
+                size: 38,
+                color: Color(0xFF2E8B57),
+              ),
+            ),
+            const SizedBox(height: 17),
+            const Text(
+              'Belum Ada Mata Kuliah',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF25372B),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Tambahkan mata kuliah terlebih dahulu '
+              'agar kamu bisa menghubungkannya dengan tugas.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              onPressed: () => _openAddCourse(context),
+              icon: const Icon(Icons.add),
+              label: const Text('Tambah Mata Kuliah'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF2E8B57),
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CourseProvider>();
+    final taskProvider = context.read<TaskProvider>();
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final horizontalPadding = constraints.maxWidth >= 700 ? 32.0 : 20.0;
+        final horizontalPadding =
+            constraints.maxWidth >= 700 ? 32.0 : 20.0;
 
-        final contentWidth = constraints.maxWidth - horizontalPadding * 2;
+        final contentWidth =
+            constraints.maxWidth - horizontalPadding * 2;
 
         final crossAxisCount = contentWidth >= 700 ? 2 : 1;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                20,
-                horizontalPadding,
-                16,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Mata Kuliah',
-                    style: TextStyle(
-                      fontSize: 21,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF25372B),
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    'Daftar mata kuliah yang sedang kamu pelajari.',
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-            ),
+            _buildHeader(context, horizontalPadding),
             Expanded(
-              child: Builder(
-                builder: (context) {
-                  if (provider.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (provider.error != null) {
-                    return ErrorView(
-                      message: provider.error!,
-                      onRetry: provider.loadCourses,
-                    );
-                  }
-
-                  if (provider.courses.isEmpty) {
-                    return const Center(
-                      child: Text('Data mata kuliah belum tersedia.'),
-                    );
-                  }
-
-                  return GridView.count(
-                    padding: EdgeInsets.fromLTRB(
-                      horizontalPadding,
-                      4,
-                      horizontalPadding,
-                      20,
-                    ),
-                    crossAxisCount: crossAxisCount,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: crossAxisCount == 2 ? 3.2 : 3.5,
-                    children: List.generate(
-                      provider.courses.length,
-                      (index) => _buildCourseCard(
-                        context,
-                        provider.courses[index],
-                        index,
-                        provider.isDeleting,
-                      ),
-                    ),
-                  );
+              child: RefreshIndicator(
+                color: const Color(0xFF2E8B57),
+                onRefresh: () async {
+                  await Future.wait([
+                    provider.loadCourses(),
+                    taskProvider.loadTasks(),
+                  ]);
                 },
+                child: Builder(
+                  builder: (context) {
+                    if (provider.isLoading) {
+                      return ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: const [
+                          SizedBox(
+                            height: 300,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF2E8B57),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+
+                    if (provider.error != null) {
+                      return ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(
+                            height: 360,
+                            child: ErrorView(
+                              message: provider.error!,
+                              onRetry: provider.loadCourses,
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+
+                    if (provider.courses.isEmpty) {
+                      return ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(
+                            height: 400,
+                            child: _buildEmptyState(context),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return GridView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        4,
+                        horizontalPadding,
+                        24,
+                      ),
+                      gridDelegate:
+                          SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        mainAxisExtent: 124,
+                      ),
+                      itemCount: provider.courses.length,
+                      itemBuilder: (context, index) {
+                        return _buildCourseCard(
+                          context,
+                          provider.courses[index],
+                          index,
+                          provider.isDeleting,
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ),
           ],

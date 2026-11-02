@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -34,14 +35,21 @@ class TaskListScreen extends StatelessWidget {
   void _openDetail(BuildContext context, Task task) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => TaskDetailScreen(task: task)),
+      MaterialPageRoute(
+        builder: (_) => TaskDetailScreen(task: task),
+      ),
     );
   }
 
-  Future<void> _openEditTask(BuildContext context, Task task) async {
+  Future<void> _openEditTask(
+    BuildContext context,
+    Task task,
+  ) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => EditTaskScreen(task: task)),
+      MaterialPageRoute(
+        builder: (_) => EditTaskScreen(task: task),
+      ),
     );
 
     if (!context.mounted) return;
@@ -81,59 +89,94 @@ class TaskListScreen extends StatelessWidget {
     Task task,
     CourseProvider courseProvider,
   ) {
-    return GestureDetector(
+    return TaskCard(
+      title: task.title,
+      subject: courseProvider.courseNameById(task.courseId),
+      deadline: _formatDate(task.deadline),
+      priority: task.priority,
+      status: task.status,
       onTap: () => _openDetail(context, task),
-      child: TaskCard(
-        title: task.title,
-        subject: courseProvider.courseNameById(task.courseId),
-        deadline: _formatDate(task.deadline),
-        priority: task.priority,
-        status: task.status,
-        onEdit: () => _openEditTask(context, task),
-      ),
+      onEdit: () => _openEditTask(context, task),
     );
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.assignment_outlined,
-              size: 52,
-              color: Color(0xFF9BAA9F),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxHeight < 260;
+
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight,
             ),
-            const SizedBox(height: 14),
-            const Text(
-              'Belum Ada Tugas',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF25372B),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: compact ? 4 : 20,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.assignment_outlined,
+                    size: compact ? 38 : 52,
+                    color: const Color(0xFF9BAA9F),
+                  ),
+                  SizedBox(height: compact ? 8 : 14),
+                  Text(
+                    'Belum Ada Tugas',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: compact ? 14 : 16,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF25372B),
+                    ),
+                  ),
+                  SizedBox(height: compact ? 4 : 7),
+                  Text(
+                    'Tambahkan tugas kuliah agar jadwalmu lebih teratur.',
+                    textAlign: TextAlign.center,
+                    maxLines: compact ? 1 : 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: compact ? 10 : 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  SizedBox(height: compact ? 8 : 16),
+                  FilledButton.icon(
+                    onPressed: () => _openAddTask(context),
+                    icon: Icon(
+                      Icons.add,
+                      size: compact ? 16 : 19,
+                    ),
+                    label: Text(
+                      'Tambah Tugas',
+                      style: TextStyle(
+                        fontSize: compact ? 11 : 13,
+                      ),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E8B57),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: compact ? 13 : 18,
+                        vertical: compact ? 8 : 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 7),
-            Text(
-              'Tambahkan tugas kuliah agar jadwalmu lebih teratur.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: () => _openAddTask(context),
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Tugas'),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF2E8B57),
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -146,10 +189,10 @@ class TaskListScreen extends StatelessWidget {
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 700;
         final horizontalPadding = isWide ? 32.0 : 20.0;
-
-        final contentWidth = constraints.maxWidth - horizontalPadding * 2;
-
-        final cardWidth = isWide ? (contentWidth - 12) / 2 : contentWidth;
+        final contentWidth =
+            constraints.maxWidth - horizontalPadding * 2;
+        final cardWidth =
+            isWide ? (contentWidth - 12) / 2 : contentWidth;
 
         return Column(
           children: [
@@ -201,7 +244,10 @@ class TaskListScreen extends StatelessWidget {
                   const SizedBox(height: 7),
                   Text(
                     'Kelola seluruh tugas perkuliahanmu.',
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ],
               ),
@@ -209,21 +255,11 @@ class TaskListScreen extends StatelessWidget {
             Expanded(
               child: Builder(
                 builder: (context) {
-                  if (taskProvider.isLoading || courseProvider.isLoading) {
+                  if (taskProvider.isLoading ||
+                      courseProvider.isLoading) {
                     return const Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(color: Color(0xFF2E8B57)),
-                          SizedBox(height: 14),
-                          Text(
-                            'Memuat data tugas...',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF718075),
-                            ),
-                          ),
-                        ],
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF2E8B57),
                       ),
                     );
                   }
@@ -232,17 +268,30 @@ class TaskListScreen extends StatelessWidget {
                       taskProvider.error ?? courseProvider.error;
 
                   if (errorMessage != null) {
-                    return ErrorView(
-                      title: 'Gagal Memuat Daftar Tugas',
-                      message: errorMessage,
-                      onRetry: () {
-                        if (taskProvider.error != null) {
-                          taskProvider.loadTasks();
-                        }
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics:
+                              const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: ErrorView(
+                              title: 'Gagal Memuat Daftar Tugas',
+                              message: errorMessage,
+                              onRetry: () {
+                                if (taskProvider.error != null) {
+                                  taskProvider.loadTasks();
+                                }
 
-                        if (courseProvider.error != null) {
-                          courseProvider.loadCourses();
-                        }
+                                if (courseProvider.error != null) {
+                                  courseProvider.loadCourses();
+                                }
+                              },
+                            ),
+                          ),
+                        );
                       },
                     );
                   }
