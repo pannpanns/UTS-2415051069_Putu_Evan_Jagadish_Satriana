@@ -227,36 +227,6 @@ lib/
 |
 └── main.dart
 ```
-
-## Application Screenshots
-
-### 1. Home / Dashboard
-![Home Dashboard](docs/screenshots/home.png)
-
-### 2. Daftar Tugas
-![Daftar Tugas](docs/screenshots/task_list.png)
-
-### 3. Detail Tugas
-![Detail Tugas](docs/screenshots/task_detail.png)
-
-### 4. Tambah Tugas
-![Tambah Tugas](docs/screenshots/add_task.png)
-
-### 5. Edit Tugas
-![Edit Tugas](docs/screenshots/edit_task.png)
-
-### 6. Mata Kuliah
-![Mata Kuliah](docs/screenshots/course_list.png)
-
-### 7. Responsive Layout
-![Responsive Layout](docs/screenshots/responsive.png)
-
-### 8. REST API
-![REST API](docs/screenshots/api_data.png)
-
-### 9. Supabase Database
-![Supabase Database](docs/screenshots/database.png)
-
 ## Installation & Setup
 
 ### Requirements
