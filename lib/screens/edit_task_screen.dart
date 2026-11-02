@@ -21,7 +21,6 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   late String? _selectedCourseId;
   late DateTime _selectedDate;
   late String _selectedPriority;
-  late String _selectedStatus;
 
   static const Color _green = Color(0xFF2E8B57);
   static const Color _darkGreen = Color(0xFF25372B);
@@ -39,10 +38,6 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     _selectedPriority = Task.priorities.contains(widget.task.priority)
         ? widget.task.priority
         : Task.priorityMedium;
-
-    _selectedStatus = Task.statuses.contains(widget.task.status)
-        ? widget.task.status
-        : Task.statusNotStarted;
   }
 
   @override
@@ -145,7 +140,14 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
 
     if (courseId == null || courseId.isEmpty) return;
 
-    final updatedTask = widget.task.copyWith(
+    final provider = context.read<TaskProvider>();
+
+    final currentTask = provider.tasks.firstWhere(
+      (item) => item.id == widget.task.id,
+      orElse: () => widget.task,
+    );
+
+    final updatedTask = currentTask.copyWith(
       title: _titleController.text.trim(),
       courseId: courseId,
       deadline: DateTime(
@@ -154,16 +156,20 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         _selectedDate.day,
       ),
       priority: _selectedPriority,
-      status: _selectedStatus,
     );
-
-    final provider = context.read<TaskProvider>();
 
     final success = await provider.updateTask(updatedTask);
 
     if (!mounted) return;
 
     if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tugas berhasil diperbarui.'),
+          backgroundColor: _green,
+        ),
+      );
+
       Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -208,6 +214,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _label('Nama Tugas'),
+
                       TextFormField(
                         controller: _titleController,
                         textCapitalization: TextCapitalization.sentences,
@@ -217,6 +224,11 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                           if (value == null || value.trim().isEmpty) {
                             return 'Nama tugas wajib diisi';
                           }
+
+                          if (value.trim().length < 3) {
+                            return 'Nama tugas minimal 3 karakter';
+                          }
+
                           return null;
                         },
                       ),
@@ -224,6 +236,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                       const SizedBox(height: 20),
 
                       _label('Mata Kuliah'),
+
                       DropdownButtonFormField<String>(
                         initialValue: hasSelectedCourse
                             ? _selectedCourseId
@@ -251,6 +264,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                           if (value == null || value.isEmpty) {
                             return 'Mata kuliah wajib dipilih';
                           }
+
                           return null;
                         },
                       ),
@@ -270,6 +284,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                       const SizedBox(height: 20),
 
                       _label('Deadline'),
+
                       InkWell(
                         onTap: _selectDate,
                         borderRadius: BorderRadius.circular(12),
@@ -289,6 +304,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                       const SizedBox(height: 20),
 
                       _label('Prioritas'),
+
                       DropdownButtonFormField<String>(
                         initialValue: _selectedPriority,
                         isExpanded: true,
@@ -310,36 +326,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                           if (value == null) {
                             return 'Prioritas wajib dipilih';
                           }
-                          return null;
-                        },
-                      ),
 
-                      const SizedBox(height: 20),
-
-                      _label('Status Tugas'),
-                      DropdownButtonFormField<String>(
-                        initialValue: _selectedStatus,
-                        isExpanded: true,
-                        decoration: _decoration(
-                          icon: Icons.pending_actions_outlined,
-                        ),
-                        items: Task.statuses.map((status) {
-                          return DropdownMenuItem<String>(
-                            value: status,
-                            child: Text(status),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() {
-                              _selectedStatus = value;
-                            });
-                          }
-                        },
-                        validator: (value) {
-                          if (value == null) {
-                            return 'Status wajib dipilih';
-                          }
                           return null;
                         },
                       ),
