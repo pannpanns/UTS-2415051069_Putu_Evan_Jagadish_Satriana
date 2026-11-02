@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/course.dart';
 import '../repositories/course_repository.dart';
+import '../utils/app_error_message.dart';
 
 class CourseProvider extends ChangeNotifier {
   CourseProvider(this._repository);
@@ -41,8 +42,8 @@ class CourseProvider extends ChangeNotifier {
 
     try {
       _courses = await _repository.getCourses();
-    } catch (e) {
-      _error = e.toString().replaceFirst('Exception: ', '');
+    } catch (error) {
+      _error = AppErrorMessage.from(error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -60,15 +61,12 @@ class CourseProvider extends ChangeNotifier {
       final createdCourse = await _repository.createCourse(course);
 
       _courses = [..._courses, createdCourse];
-
       _courses.sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
 
       _error = null;
-
       return true;
-    } catch (e) {
-      _createError = e.toString().replaceFirst('Exception: ', '');
-
+    } catch (error) {
+      _createError = AppErrorMessage.from(error);
       return false;
     } finally {
       _isCreating = false;
@@ -102,11 +100,9 @@ class CourseProvider extends ChangeNotifier {
       _courses = List<Course>.from(_courses);
 
       _error = null;
-
       return true;
-    } catch (e) {
-      _updateError = e.toString().replaceFirst('Exception: ', '');
-
+    } catch (error) {
+      _updateError = AppErrorMessage.from(error);
       return false;
     } finally {
       _isUpdating = false;
@@ -116,6 +112,12 @@ class CourseProvider extends ChangeNotifier {
 
   Future<bool> deleteCourse(int id) async {
     if (_isDeleting) return false;
+
+    if (id <= 0) {
+      _deleteError = 'ID mata kuliah tidak valid.';
+      notifyListeners();
+      return false;
+    }
 
     _isDeleting = true;
     _deleteError = null;
@@ -127,11 +129,9 @@ class CourseProvider extends ChangeNotifier {
       _courses = _courses.where((course) => course.id != id).toList();
 
       _error = null;
-
       return true;
-    } catch (e) {
-      _deleteError = e.toString().replaceFirst('Exception: ', '');
-
+    } catch (error) {
+      _deleteError = AppErrorMessage.from(error);
       return false;
     } finally {
       _isDeleting = false;

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/task.dart';
 import '../repositories/task_repository.dart';
+import '../utils/app_error_message.dart';
 
 class TaskProvider extends ChangeNotifier {
   TaskProvider(this._repository);
@@ -45,15 +46,12 @@ class TaskProvider extends ChangeNotifier {
 
   double get completionRate {
     if (_tasks.isEmpty) return 0;
-
     return completedTasks / totalTasks;
   }
 
   List<Task> get upcomingTasks {
     final result = List<Task>.from(_tasks);
-
     result.sort((a, b) => a.deadline.compareTo(b.deadline));
-
     return List.unmodifiable(result);
   }
 
@@ -66,8 +64,8 @@ class TaskProvider extends ChangeNotifier {
 
     try {
       _tasks = await _repository.getTasks();
-    } catch (e) {
-      _error = e.toString().replaceFirst('Exception: ', '');
+    } catch (error) {
+      _error = AppErrorMessage.from(error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -85,15 +83,12 @@ class TaskProvider extends ChangeNotifier {
       final createdTask = await _repository.createTask(task);
 
       _tasks = [..._tasks, createdTask];
-
       _tasks.sort((a, b) => a.deadline.compareTo(b.deadline));
 
       _error = null;
-
       return true;
-    } catch (e) {
-      _createError = e.toString().replaceFirst('Exception: ', '');
-
+    } catch (error) {
+      _createError = AppErrorMessage.from(error);
       return false;
     } finally {
       _isCreating = false;
@@ -126,15 +121,12 @@ class TaskProvider extends ChangeNotifier {
       }
 
       _tasks[index] = updatedTask;
-
       _tasks.sort((a, b) => a.deadline.compareTo(b.deadline));
 
       _error = null;
-
       return true;
-    } catch (e) {
-      _updateError = e.toString().replaceFirst('Exception: ', '');
-
+    } catch (error) {
+      _updateError = AppErrorMessage.from(error);
       return false;
     } finally {
       _isUpdating = false;
@@ -161,11 +153,9 @@ class TaskProvider extends ChangeNotifier {
       _tasks = _tasks.where((task) => task.id != id).toList();
 
       _error = null;
-
       return true;
-    } catch (e) {
-      _deleteError = e.toString().replaceFirst('Exception: ', '');
-
+    } catch (error) {
+      _deleteError = AppErrorMessage.from(error);
       return false;
     } finally {
       _isDeleting = false;

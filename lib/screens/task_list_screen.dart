@@ -5,6 +5,7 @@ import '../models/task.dart';
 import '../providers/course_provider.dart';
 import '../providers/task_provider.dart';
 import '../widgets/task_card.dart';
+import '../widgets/error_view.dart';
 import 'add_task_screen.dart';
 import 'task_detail_screen.dart';
 import 'edit_task_screen.dart';
@@ -93,6 +94,49 @@ class TaskListScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.assignment_outlined,
+              size: 52,
+              color: Color(0xFF9BAA9F),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Belum Ada Tugas',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF25372B),
+              ),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              'Tambahkan tugas kuliah agar jadwalmu lebih teratur.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () => _openAddTask(context),
+              icon: const Icon(Icons.add),
+              label: const Text('Tambah Tugas'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF2E8B57),
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final taskProvider = context.watch<TaskProvider>();
@@ -101,7 +145,6 @@ class TaskListScreen extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 700;
-
         final horizontalPadding = isWide ? 32.0 : 20.0;
 
         final contentWidth = constraints.maxWidth - horizontalPadding * 2;
@@ -167,30 +210,45 @@ class TaskListScreen extends StatelessWidget {
               child: Builder(
                 builder: (context) {
                   if (taskProvider.isLoading || courseProvider.isLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (taskProvider.error != null ||
-                      courseProvider.error != null) {
-                    return Center(
+                    return const Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('Gagal memuat data tugas.'),
-                          TextButton(
-                            onPressed: () {
-                              taskProvider.loadTasks();
-                              courseProvider.loadCourses();
-                            },
-                            child: const Text('Coba Lagi'),
+                          CircularProgressIndicator(color: Color(0xFF2E8B57)),
+                          SizedBox(height: 14),
+                          Text(
+                            'Memuat data tugas...',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF718075),
+                            ),
                           ),
                         ],
                       ),
                     );
                   }
 
+                  final errorMessage =
+                      taskProvider.error ?? courseProvider.error;
+
+                  if (errorMessage != null) {
+                    return ErrorView(
+                      title: 'Gagal Memuat Daftar Tugas',
+                      message: errorMessage,
+                      onRetry: () {
+                        if (taskProvider.error != null) {
+                          taskProvider.loadTasks();
+                        }
+
+                        if (courseProvider.error != null) {
+                          courseProvider.loadCourses();
+                        }
+                      },
+                    );
+                  }
+
                   if (taskProvider.tasks.isEmpty) {
-                    return const Center(child: Text('Belum ada tugas.'));
+                    return _buildEmptyState(context);
                   }
 
                   return ListView(
