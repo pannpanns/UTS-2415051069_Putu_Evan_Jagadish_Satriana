@@ -42,4 +42,19 @@ class CourseSupabaseService implements CourseWritableDataSource {
 
     return Course.fromJson(response);
   }
+
+  @override
+  Future<void> deleteCourse(int id) async {
+    final response = await _client
+        .from('courses')
+        .delete()
+        .eq('id', id)
+        .select('id');
+
+    if (response.isEmpty) {
+      throw StateError(
+        'Mata kuliah tidak ditemukan atau tidak memiliki izin untuk dihapus.',
+      );
+    }
+  }
 }

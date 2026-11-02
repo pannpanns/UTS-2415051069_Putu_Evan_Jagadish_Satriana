@@ -44,4 +44,23 @@ class TaskSupabaseService implements TaskDataSource {
 
     return Task.fromJson(response);
   }
+
+  @override
+  Future<void> deleteTask(String id) async {
+    if (id.isEmpty) {
+      throw ArgumentError('ID tugas tidak valid.');
+    }
+
+    final response = await _client
+        .from('tasks')
+        .delete()
+        .eq('id', id)
+        .select('id');
+
+    if (response.isEmpty) {
+      throw StateError(
+        'Tugas tidak ditemukan atau tidak memiliki izin untuk dihapus.',
+      );
+    }
+  }
 }

@@ -29,4 +29,14 @@ class CourseRepository {
 
     return source.updateCourse(course);
   }
+
+  Future<void> deleteCourse(int id) {
+    final source = dataSource;
+
+    if (source is! CourseWritableDataSource) {
+      throw UnsupportedError('Sumber data tidak mendukung Delete.');
+    }
+
+    return source.deleteCourse(id);
+  }
 }

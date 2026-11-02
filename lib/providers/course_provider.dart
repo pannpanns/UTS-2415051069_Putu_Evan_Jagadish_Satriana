@@ -13,20 +13,24 @@ class CourseProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isCreating = false;
   bool _isUpdating = false;
+  bool _isDeleting = false;
 
   String? _error;
   String? _createError;
   String? _updateError;
+  String? _deleteError;
 
   List<Course> get courses => List.unmodifiable(_courses);
 
   bool get isLoading => _isLoading;
   bool get isCreating => _isCreating;
   bool get isUpdating => _isUpdating;
+  bool get isDeleting => _isDeleting;
 
   String? get error => _error;
   String? get createError => _createError;
   String? get updateError => _updateError;
+  String? get deleteError => _deleteError;
 
   Future<void> loadCourses() async {
     if (_isLoading) return;
@@ -95,7 +99,6 @@ class CourseProvider extends ChangeNotifier {
       }
 
       _courses[index] = updatedCourse;
-
       _courses = List<Course>.from(_courses);
 
       _error = null;
@@ -107,6 +110,31 @@ class CourseProvider extends ChangeNotifier {
       return false;
     } finally {
       _isUpdating = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> deleteCourse(int id) async {
+    if (_isDeleting) return false;
+
+    _isDeleting = true;
+    _deleteError = null;
+    notifyListeners();
+
+    try {
+      await _repository.deleteCourse(id);
+
+      _courses = _courses.where((course) => course.id != id).toList();
+
+      _error = null;
+
+      return true;
+    } catch (e) {
+      _deleteError = e.toString().replaceFirst('Exception: ', '');
+
+      return false;
+    } finally {
+      _isDeleting = false;
       notifyListeners();
     }
   }

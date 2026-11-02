@@ -63,4 +63,15 @@ class InMemoryTaskDataSource implements TaskDataSource {
 
     return task;
   }
+
+  @override
+  Future<void> deleteTask(String id) async {
+    final index = _tasks.indexWhere((item) => item.id == id);
+
+    if (index == -1) {
+      throw StateError('Tugas tidak ditemukan.');
+    }
+
+    _tasks.removeAt(index);
+  }
 }

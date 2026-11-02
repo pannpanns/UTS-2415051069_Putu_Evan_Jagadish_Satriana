@@ -17,4 +17,8 @@ class TaskRepository {
   Future<Task> updateTask(Task task) {
     return dataSource.updateTask(task);
   }
+
+  Future<void> deleteTask(String id) {
+    return dataSource.deleteTask(id);
+  }
 }

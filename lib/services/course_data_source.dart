@@ -8,4 +8,6 @@ abstract class CourseWritableDataSource extends CourseDataSource {
   Future<Course> createCourse(Course course);
 
   Future<Course> updateCourse(Course course);
+
+  Future<void> deleteCourse(int id);
 }

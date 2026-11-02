@@ -5,6 +5,7 @@ import '../models/task.dart';
 import '../providers/course_provider.dart';
 import '../providers/task_provider.dart';
 import '../widgets/priority_badge.dart';
+import '../widgets/confirm_delete_dialog.dart';
 import 'edit_task_screen.dart';
 
 class TaskDetailScreen extends StatelessWidget {
@@ -33,6 +34,47 @@ class TaskDetailScreen extends StatelessWidget {
 
     return '${date.day.toString().padLeft(2, '0')} '
         '${months[date.month - 1]} ${date.year}';
+  }
+
+  Future<void> _deleteTask(BuildContext context, Task currentTask) async {
+    final confirmed = await showDeleteConfirmation(
+      context: context,
+      title: 'Hapus Tugas?',
+      message:
+          'Tugas "${currentTask.title}" akan dihapus secara permanen. '
+          'Tindakan ini tidak dapat dibatalkan.',
+    );
+
+    if (!confirmed || !context.mounted) return;
+
+    final taskId = currentTask.id;
+
+    if (taskId == null || taskId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ID tugas tidak valid.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final provider = context.read<TaskProvider>();
+
+    final success = await provider.deleteTask(taskId);
+
+    if (!context.mounted) return;
+
+    if (success) {
+      Navigator.pop(context, true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.deleteError ?? 'Gagal menghapus tugas.'),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
   }
 
   Widget _buildInformation(String label, String value, IconData icon) {
@@ -89,6 +131,25 @@ class TaskDetailScreen extends StatelessWidget {
             title: const Text('Detail Tugas'),
             backgroundColor: _background,
             surfaceTintColor: Colors.transparent,
+            actions: [
+              IconButton(
+                tooltip: 'Hapus tugas',
+                onPressed: taskProvider.isDeleting
+                    ? null
+                    : () => _deleteTask(context, currentTask),
+                icon: taskProvider.isDeleting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(
+                        Icons.delete_outline,
+                        color: Color(0xFFD94C4C),
+                      ),
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
           body: SingleChildScrollView(
             physics: const ClampingScrollPhysics(),

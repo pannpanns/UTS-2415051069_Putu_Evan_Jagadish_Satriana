@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../models/course.dart';
 import '../providers/course_provider.dart';
+import '../providers/task_provider.dart';
 import '../widgets/error_view.dart';
+import '../widgets/confirm_delete_dialog.dart';
 import 'edit_course_screen.dart';
 
 class CourseScreen extends StatelessWidget {
@@ -63,7 +65,85 @@ class CourseScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildCourseCard(BuildContext context, Course course, int index) {
+  Future<void> _deleteCourse(BuildContext context, Course course) async {
+    final taskProvider = context.read<TaskProvider>();
+
+    if (taskProvider.isLoading || taskProvider.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Data tugas belum siap. Coba lagi setelah data dimuat.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final isUsed = taskProvider.tasks.any(
+      (task) => task.courseId == course.id.toString(),
+    );
+
+    if (isUsed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Mata kuliah masih digunakan oleh tugas. '
+            'Ubah atau hapus tugas terkait terlebih dahulu.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await showDeleteConfirmation(
+      context: context,
+      title: 'Hapus Mata Kuliah?',
+      message:
+          'Mata kuliah "${course.title}" akan dihapus secara permanen. '
+          'Tindakan ini tidak dapat dibatalkan.',
+    );
+
+    if (!confirmed || !context.mounted) return;
+
+    if (course.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ID mata kuliah tidak valid.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final provider = context.read<CourseProvider>();
+
+    final success = await provider.deleteCourse(course.id!);
+
+    if (!context.mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mata kuliah berhasil dihapus.'),
+          backgroundColor: Color(0xFF2E8B57),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(provider.deleteError ?? 'Gagal menghapus mata kuliah.'),
+          backgroundColor: Colors.red.shade700,
+        ),
+      );
+    }
+  }
+
+  Widget _buildCourseCard(
+    BuildContext context,
+    Course course,
+    int index,
+    bool isDeleting,
+  ) {
     final color = _colors[index % _colors.length];
     final statusColor = _statusColor(course.status);
 
@@ -133,6 +213,34 @@ class CourseScreen extends StatelessWidget {
             onPressed: () => _openEditCourse(context, course),
             icon: const Icon(Icons.edit_outlined),
             color: const Color(0xFF2E8B57),
+          ),
+          PopupMenuButton<String>(
+            enabled: !isDeleting,
+            tooltip: 'Pilihan mata kuliah',
+            onSelected: (value) {
+              if (value == 'delete') {
+                _deleteCourse(context, course);
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem<String>(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.delete_outline,
+                      color: Color(0xFFD94C4C),
+                      size: 20,
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      'Hapus mata kuliah',
+                      style: TextStyle(color: Color(0xFFD94C4C)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -217,6 +325,7 @@ class CourseScreen extends StatelessWidget {
                         context,
                         provider.courses[index],
                         index,
+                        provider.isDeleting,
                       ),
                     ),
                   );

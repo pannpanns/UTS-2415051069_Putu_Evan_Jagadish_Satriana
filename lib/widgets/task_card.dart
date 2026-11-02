@@ -8,6 +8,8 @@ class TaskCard extends StatelessWidget {
   final String deadline;
   final String priority;
   final String status;
+
+  final VoidCallback? onTap;
   final VoidCallback? onEdit;
 
   const TaskCard({
@@ -17,6 +19,7 @@ class TaskCard extends StatelessWidget {
     required this.deadline,
     required this.priority,
     required this.status,
+    this.onTap,
     this.onEdit,
   });
 
@@ -55,160 +58,169 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: const Color(0xFFE2EBE4)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1B5E3B).withValues(alpha: 0.035),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              width: 4,
-              decoration: BoxDecoration(
-                color: _priorityColor,
-                borderRadius: BorderRadius.circular(10),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(17),
+            border: Border.all(color: const Color(0xFFE2EBE4)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1B5E3B).withValues(alpha: 0.035),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
-            ),
-
-            const SizedBox(width: 12),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // BARIS 1: JUDUL DAN EDIT
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF25372B),
-                          ),
-                        ),
-                      ),
+                  // PRIORITY INDICATOR
+                  Container(
+                    width: 4,
+                    decoration: BoxDecoration(
+                      color: _priorityColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
 
-                      if (onEdit != null) ...[
-                        const SizedBox(width: 8),
+                  const SizedBox(width: 12),
 
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFE8F4EC),
-                            shape: BoxShape.circle,
-                          ),
-                          child: InkWell(
-                            onTap: onEdit,
-                            customBorder: const CircleBorder(),
-                            child: const Center(
-                              child: Icon(
-                                Icons.edit_outlined,
-                                size: 16,
-                                color: Color(0xFF2E8B57),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ROW 1: TITLE + EDIT
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF25372B),
+                                ),
                               ),
                             ),
-                          ),
+
+                            if (onEdit != null) ...[
+                              const SizedBox(width: 8),
+
+                              SizedBox(
+                                width: 32,
+                                height: 32,
+                                child: Material(
+                                  color: const Color(0xFFE8F4EC),
+                                  shape: const CircleBorder(),
+                                  child: IconButton(
+                                    tooltip: 'Edit tugas',
+                                    padding: EdgeInsets.zero,
+                                    iconSize: 16,
+                                    onPressed: onEdit,
+                                    icon: const Icon(
+                                      Icons.edit_outlined,
+                                      color: Color(0xFF2E8B57),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // ROW 2: SUBJECT + PRIORITY
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.menu_book_outlined,
+                              size: 14,
+                              color: Colors.grey.shade500,
+                            ),
+
+                            const SizedBox(width: 6),
+
+                            Expanded(
+                              child: Text(
+                                subject,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 8),
+
+                            PriorityBadge(priority: priority),
+                          ],
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // ROW 3: DEADLINE + STATUS
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              size: 13,
+                              color: Colors.grey.shade500,
+                            ),
+
+                            const SizedBox(width: 6),
+
+                            Expanded(
+                              child: Text(
+                                deadline,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ),
+
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _statusBackground,
+                                borderRadius: BorderRadius.circular(7),
+                              ),
+                              child: Text(
+                                status,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: _statusColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
-                    ],
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // BARIS 2: MATA KULIAH DAN PRIORITAS
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.menu_book_outlined,
-                        size: 14,
-                        color: Colors.grey.shade500,
-                      ),
-
-                      const SizedBox(width: 6),
-
-                      Expanded(
-                        child: Text(
-                          subject,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 8),
-
-                      PriorityBadge(priority: priority),
-                    ],
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // BARIS 3: DEADLINE DAN STATUS
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        size: 13,
-                        color: Colors.grey.shade500,
-                      ),
-
-                      const SizedBox(width: 6),
-
-                      Expanded(
-                        child: Text(
-                          deadline,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ),
-
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 9,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _statusBackground,
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        child: Text(
-                          status,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: _statusColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

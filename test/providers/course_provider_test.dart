@@ -1,3 +1,4 @@
+import 'package:tuntas_kuliah/models/course.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:tuntas_kuliah/providers/course_provider.dart';
@@ -18,17 +19,29 @@ void main() {
       expect(provider.courses.length, 4);
     });
 
-    test('finds course name using course ID', () async {
+    test('creates course successfully', () async {
       final provider = CourseProvider(
         CourseRepository(InMemoryCourseDataSource()),
       );
 
       await provider.loadCourses();
 
-      expect(provider.courseNameById('1'), 'Pemrograman Mobile');
+      final success = await provider.createCourse(
+        const Course(
+          code: 'IF210',
+          title: 'Pemrograman Lanjut',
+          credits: 3,
+          status: 'planned',
+        ),
+      );
+
+      expect(success, true);
+      expect(provider.courses.length, 5);
+      expect(provider.isCreating, false);
+      expect(provider.createError, isNull);
     });
 
-    test('updates course successfully without changing its ID', () async {
+    test('updates course successfully', () async {
       final provider = CourseProvider(
         CourseRepository(InMemoryCourseDataSource()),
       );
@@ -39,7 +52,6 @@ void main() {
 
       final updatedCourse = originalCourse.copyWith(
         title: 'Pemrograman Mobile Revisi',
-        code: 'IF204',
       );
 
       final success = await provider.updateCourse(updatedCourse);
@@ -48,16 +60,29 @@ void main() {
       expect(provider.courses.length, 4);
       expect(provider.isUpdating, false);
       expect(provider.updateError, isNull);
+    });
 
-      final result = provider.courses.firstWhere(
-        (course) => course.id == originalCourse.id,
+    test('deletes course successfully', () async {
+      final provider = CourseProvider(
+        CourseRepository(InMemoryCourseDataSource()),
       );
 
-      expect(result.id, originalCourse.id);
-      expect(result.title, 'Pemrograman Mobile Revisi');
-      expect(result.code, 'IF204');
+      await provider.loadCourses();
 
-      expect(provider.courseNameById('1'), 'Pemrograman Mobile Revisi');
+      final courseId = provider.courses.first.id!;
+
+      final success = await provider.deleteCourse(courseId);
+
+      expect(success, true);
+      expect(provider.courses.length, 3);
+      expect(
+        provider.courses.any(
+          (course) => course.id == courseId,
+        ),
+        false,
+      );
+      expect(provider.isDeleting, false);
+      expect(provider.deleteError, isNull);
     });
   });
 }

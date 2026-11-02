@@ -71,4 +71,15 @@ class InMemoryCourseDataSource implements CourseWritableDataSource {
 
     return course;
   }
+
+  @override
+  Future<void> deleteCourse(int id) async {
+    final index = _courses.indexWhere((item) => item.id == id);
+
+    if (index == -1) {
+      throw StateError('Mata kuliah tidak ditemukan.');
+    }
+
+    _courses.removeAt(index);
+  }
 }
